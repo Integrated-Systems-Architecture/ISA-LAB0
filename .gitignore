@@ -1,0 +1,16 @@
+# Vendored X-HEEP snapshot (recreate with `make vendor`)
+/x-heep/
+
+# sw symlinks into the vendored X-HEEP (recreated by `make vendor` / `make sw-links`)
+/sw/device
+/sw/linker
+/sw/build
+
+# Build / sim artifacts
+build/
+*.log
+*.vcd
+*.fst
+*.elf
+*.o
+__pycache__/

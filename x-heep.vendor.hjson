@@ -1,0 +1,17 @@
+// Vendoring descriptor for X-HEEP.
+// `make vendor` runs: python3 util/vendor.py x-heep.vendor.hjson
+// This copies a snapshot of the upstream repo into ./x-heep (no .git).
+//
+// Reproducibility: pin `rev` to a commit SHA before handing this to students.
+// `main` is fine while developing the labs.
+{
+  name: "x-heep",
+  target_dir: "x-heep",
+
+  upstream: {
+    url: "https://github.com/esl-epfl/x-heep.git",
+    rev: "main",
+  },
+  // Full snapshot: X-HEEP's own mcu-gen references test/ and other dirs, so
+  // don't trim them.
+}
