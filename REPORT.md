@@ -13,20 +13,74 @@ snapshot vs submodule.)
 
 ## 2. Profiling results
 
-Fill in the measured numbers. Use the same X-HEEP build for all rows.
+Copy the per-kernel table each application prints. Use the same X-HEEP build
+for all three.
 
-| App    | Kernel cycles | Kernel instr | Dominant function (RV_PROFILE) |
-|--------|---------------|--------------|--------------------------------|
-| matmul |               |              |                                |
-| crc32  |               |              |                                |
+| rxchain kernel | cycles | share |
+|----------------|--------|-------|
+| total          |        | 100%  |
+| nco            |        |       |
+| mixer          |        |       |
+| fir            |        |       |
+| decimate       |        |       |
+| magnitude      |        |       |
+| detect         |        |       |
+
+| tinydnn kernel | cycles | share |
+|----------------|--------|-------|
+| total          |        | 100%  |
+| conv           |        |       |
+| pool           |        |       |
+| linear         |        |       |
+| requant        |        |       |
+
+| tinyformer kernel | cycles | share |
+|-------------------|--------|-------|
+| total             |        | 100%  |
+| linear            |        |       |
+| qk                |        |       |
+| softmax           |        |       |
+| av                |        |       |
+| norm              |        |       |
+| requant           |        |       |
+
+Dominant function per app from the RV_PROFILE flamegraph:
+
+| App | Dominant function | Agrees with the table above? |
+|-----|-------------------|------------------------------|
+| rxchain    |  |  |
+| tinydnn    |  |  |
+| tinyformer |  |  |
 
 What did each profiling method tell you that the others did not?
 
-- Cycle printf: _______
+- Cycle counters: _______
 - RV_PROFILE flamegraph: _______
 - Waveforms (debug observation): _______
 
-## 3. Chosen application & accelerator proposal
+## 3. Amdahl's law
+
+Dominant kernel per app, and its share:
+
+- rxchain: _______ (___%)
+- tinydnn: _______ (___%)
+- tinyformer: _______ (___%)
+
+Maximum whole-application speedup if that kernel cost zero cycles:
+
+- rxchain: _______×
+- tinydnn: _______×
+- tinyformer: _______×
+
+Which kernels were cheaper than they look, and which were more expensive?
+
+> _your answer_
+
+Does any one kernel carry weight in more than one app?
+
+> _your answer_
+
+## 4. Chosen application & accelerator proposal
 
 **Chosen app:** _______   **Kernel to accelerate:** _______
 
@@ -39,4 +93,15 @@ What did each profiling method tell you that the others did not?
 
 > _your sketch_
 
+**Which of the three apps this accelerator speeds up, and by how much in each:**
+_______
+
 **Risks / open questions:** _______
+
+## 5. Optional: FPGA run
+
+Did you run a complete application on the board? If so: board, `NINFER` /
+`NBLOCK`, cycles or wall-clock per run, and how it compares with the Verilator
+number.
+
+> _optional_

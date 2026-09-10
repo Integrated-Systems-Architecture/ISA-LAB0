@@ -17,7 +17,7 @@
 ROOT_DIR        := $(realpath .)
 export HEEP_DIR ?= $(ROOT_DIR)/x-heep
 XHEEP_CFG       ?= $(ROOT_DIR)/config.py  # your SoC config (edit config.py)
-export PROJECT  ?= matmul                 # app under sw/applications/<PROJECT>
+export PROJECT  ?= rxchain                # app under sw/applications/<PROJECT>
 
 # SOURCE = path from x-heep/sw to OUR sw dir, so X-HEEP builds our out-of-tree
 # apps and (via the device/linker/build symlinks in our sw) finds its own device
@@ -31,7 +31,7 @@ export SOURCE   ?= ../../sw/
 # X-HEEP `profile` target sees it. Needs a prior `verilator-run` (for the .fst).
 export RV_PROFILE ?= rv_profile
 
-.PHONY: help vendor sw-links mcu-gen
+.PHONY: help vendor sw-links mcu-gen host-check
 
 help:
 	@echo "X-HEEP accelerator labs -- Lab 0 (profiling)"
@@ -40,15 +40,33 @@ help:
 	@echo "  make mcu-gen                       generate the MCU from config.py (fusesoc)"
 	@echo "  make verilator-build               build the Verilator model      [-> X-HEEP]"
 	@echo "  make app PROJECT=<app>             compile <app> out-of-tree       [-> X-HEEP]"
-	@echo "  make verilator-run PROJECT=<app>   run <app> on the model          [-> X-HEEP]"
+	@echo "  make verilator-run-app PROJECT=<app>   compile + run <app>         [-> X-HEEP]"
+	@echo "  make verilator-run PROJECT=<app>   run the LAST-BUILT app           [-> X-HEEP]"
 	@echo "  make questasim-run-app PROJECT=<app>   build + run on QuestaSim    [-> X-HEEP]"
 	@echo "  make profile                       flamegraph from last run's .fst  [-> X-HEEP]"
+	@echo "  make host-check                    build+run every app on the HOST, check results"
 	@echo "  make verilator-waves               open last waveform (gtkwave)    [-> X-HEEP]"
 	@echo ""
 	@echo "  [-> X-HEEP] = forwarded to the vendored X-HEEP via external.mk"
 	@echo "  typical: make vendor && make mcu-gen && make verilator-build \\"
-	@echo "           && make app PROJECT=matmul && make verilator-run PROJECT=matmul"
+	@echo "           && make verilator-run-app PROJECT=rxchain"
 	@echo "  apps: $(notdir $(wildcard sw/applications/*))"
+
+# --- Host check -------------------------------------------------------------
+# Build and run every app with the HOST compiler (no X-HEEP, no simulator) and
+# check its self-test. The apps are plain integer C, so the host result is
+# bit-identical to the RISC-V one: use this to check a change in seconds
+# instead of minutes, and to get the golden checksum after changing a size.
+HOST_CC   ?= cc
+HOST_APPS := $(notdir $(wildcard sw/applications/*))
+HOST_DIR  := build/host
+
+host-check:
+	@mkdir -p $(HOST_DIR); rc=0; \
+	for a in $(HOST_APPS); do \
+	  $(HOST_CC) -O2 -Wall -Isw/external -o $(HOST_DIR)/$$a sw/applications/$$a/main.c || exit 1; \
+	  $(HOST_DIR)/$$a | grep -E 'PASS|FAIL' || rc=1; \
+	done; exit $$rc
 
 # --- Vendoring --------------------------------------------------------------
 # python3 util/vendor.py x-heep.vendor.hjson  ->  snapshot of X-HEEP into ./x-heep
