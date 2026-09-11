@@ -21,7 +21,7 @@
 // detector looks trivial and touches every sample.
 //
 // The CORDIC stage is also THE REFERENCE EXAMPLE for the whole lab series:
-// `k_cordic_rot` is bit-exact with `cookbook/code/cordic/`, where the same
+// `k_cordic_rot` is bit-exact with `books/examplecookbook/code/cordic/`, where the same
 // rotator exists as VHDL, as SystemVerilog, as a Python golden model and as
 // six testbenches that check one against the other. Read that before Lab 1.
 

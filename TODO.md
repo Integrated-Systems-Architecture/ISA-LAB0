@@ -128,7 +128,7 @@ that far. Decide and justify:
   each (use the measured per-kernel shares).
 
 **Before you write any RTL, read the CORDIC example in
-`cookbook/code/cordic/`.** The NCO stage of `rxchain` is bit-exact with it: the
+`books/examplecookbook/code/cordic/`.** The NCO stage of `rxchain` is bit-exact with it: the
 same rotator exists there as VHDL, as SystemVerilog, as a Python golden model
 and as six testbenches that check one against the other. That is the structure
 Lab 1 asks you to reproduce for your own kernel — golden model first, RTL that

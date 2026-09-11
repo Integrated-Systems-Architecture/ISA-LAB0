@@ -278,7 +278,7 @@ static inline void k_layernorm_i32(int32_t *row, int n, int32_t gain) {
 // --- CORDIC -----------------------------------------------------------------
 //
 // Rotation-mode CORDIC, bit-exact with the worked example of the cookbook
-// (`cookbook/code/cordic/`): the same shift-add micro-rotation loop as
+// (`books/examplecookbook/code/cordic/`): the same shift-add micro-rotation loop as
 // `cordic_rot.sv` / `cordic_rot.vhd`, and the same arithmetic as the Python
 // golden model `cordic_model.py`. Same constants, same guard bits, same
 // truncation, so this C, that RTL and that model all produce identical

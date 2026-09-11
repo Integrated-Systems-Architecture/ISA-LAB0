@@ -70,7 +70,7 @@ host-check` prints the new one.
 
 The CORDIC stage of `rxchain` (`k_cordic_rot`, the NCO) is bit-exact with the
 worked example of the SystemVerilog cookbook,
-`cookbook/code/cordic/`: the same rotator written in **VHDL**
+`books/examplecookbook/code/cordic/`: the same rotator written in **VHDL**
 (`cordic_rot.vhd`) and **SystemVerilog** (`cordic_rot.sv`), verified against
 one Python golden model (`cordic_model.py`) by six different testbenches, with
 the vectors in `vectors/cordic_vectors.txt`.
