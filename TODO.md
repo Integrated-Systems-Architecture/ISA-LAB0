@@ -31,7 +31,7 @@ snapshot instead of a git submodule).
 
 ## 1. Run the apps
 
-Three applications live in `sw/applications/`. Each is a **complete
+Four applications live in `sw/applications/`. Each is a **complete
 application** assembled from several kernels, not one kernel in a wrapper:
 
 - `rxchain`    — a digital receiver front-end: CORDIC NCO → mixer → FIR ×2 →
@@ -39,10 +39,12 @@ application** assembled from several kernels, not one kernel in a wrapper:
 - `tinydnn`    — a quantized CNN: conv → pool → conv → pool → FC → FC → argmax
 - `tinyformer` — a 2-layer transformer encoder: embedding, multi-head
   attention, feed-forward, layer norm, classifier head
+- `pqcrypto`   — a lattice-based public-key encryption round (Kyber-style):
+  keygen → encrypt → decrypt over Z_q[x]/(x^n+1), built on the NTT
 
 ```bash
 make verilator-run-app PROJECT=rxchain   # = make app + make verilator-run
-# ... and the same for tinydnn and tinyformer
+# ... and the same for tinydnn, tinyformer and pqcrypto
 ```
 
 `verilator-run` on its own re-runs whatever binary was compiled last, so it

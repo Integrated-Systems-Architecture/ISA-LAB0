@@ -41,7 +41,7 @@ Then do `TODO.md` and fill in `REPORT.md`.
 
 ## The applications
 
-Three of them. Each is a **complete application**, not a kernel in a wrapper,
+Four of them. Each is a **complete application**, not a kernel in a wrapper,
 and each is assembled from the shared kernel library `sw/external/kernels.h`:
 
 | App | What it is | Kernels in it |
@@ -49,12 +49,15 @@ and each is assembled from the shared kernel library `sw/external/kernels.h`:
 | `rxchain`    | a digital receiver front-end | CORDIC NCO, mixer, FIR ×2, decimate, magnitude, detector |
 | `tinydnn`    | a quantized CNN inference | conv2d+ReLU ×2, maxpool ×2, linear ×2, requant |
 | `tinyformer` | a 2-layer transformer encoder | linear ×9, Q·Kᵀ, softmax, weights·V, layer norm, requant |
+| `pqcrypto`   | a lattice public-key encryption round | NTT ×3, inverse NTT ×3, pointwise multiply, poly add, noise sampling, compress |
 
 There are no single-kernel benchmarks on purpose. Each app prints **cycles per
 kernel and its share of the whole run**, and *deciding which kernel deserves
 hardware is the work of Lab 0*. The obvious answer is often wrong: in
 `rxchain` decimation looks like work and costs nothing; in `tinyformer` the
-softmax looks exotic and is 1% while the plain matmuls are 80%. Whatever share
+softmax looks exotic and is 1% while the plain matmuls are 80%; in `pqcrypto`
+the pointwise multiply that *is* the polynomial product is 5% and the two
+transforms that only make it possible are 82%. Whatever share
 you measure is Amdahl's ceiling on the speedup you can report in Lab 3.
 
 Because the apps share the library, one accelerator can serve more than one of

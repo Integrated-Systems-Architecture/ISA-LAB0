@@ -422,4 +422,193 @@ static inline void k_fill_i8(int8_t *v, int n, int range, uint32_t *state) {
         v[i] = (int8_t)((int32_t)(k_rand(state) % (uint32_t)(2 * range + 1)) - range);
 }
 
+// --- Number-theoretic transform (NTT) ---------------------------------------
+//
+// The NTT is the FFT with the complex unit circle replaced by the integers mod
+// a prime: same Cooley-Tukey butterfly, same O(n log n), same bit-reversed
+// dataflow -- but every value is an exact integer, so there is no rounding and
+// no wordlength analysis to do. That is why every lattice-based post-quantum
+// scheme (Kyber, Dilithium, Falcon, NewHope) multiplies polynomials with it,
+// and why an NTT butterfly is the single most published accelerator in that
+// field.
+//
+// Ring: Z_q[x] / (x^n + 1) with q = 12289 (the NewHope/Falcon prime) and n a
+// power of two. Because x^n + 1 is NEGACYCLIC, the transform uses psi, a
+// primitive 2n-th root of unity, not just the n-th root the plain FFT uses:
+// the psi-weighting folds the "wrap around with a minus sign" into the
+// transform, so a pointwise product in the NTT domain is a negacyclic
+// convolution back in the coefficient domain.
+//
+// Structure follows Longa & Naehrig (CANS 2016): forward = Cooley-Tukey,
+// natural order in, bit-reversed order out; inverse = Gentleman-Sande,
+// bit-reversed in, natural out. No bit-reversal permutation pass is ever
+// needed, because the two orders cancel.
+//
+// Arithmetic note: q < 2^14, so a product of two reduced values is < 2^28 and
+// fits an int32 -- one 14x14 multiplier plus one reduction is the whole
+// datapath. Reduction here is a plain `%` (the compiler turns it into a
+// multiply and a shift); real hardware uses Montgomery or Barrett, which is
+// one of the optimizations Lab 2 is about.
+
+#define K_NTT_Q 12289    // prime modulus, q - 1 = 2^12 * 3
+#define K_NTT_G 11       // a primitive root mod q
+
+static inline int32_t k_modq(int32_t x) {
+    x %= K_NTT_Q;
+    return x < 0 ? x + K_NTT_Q : x;
+}
+
+static inline int32_t k_mulmod_q(int32_t a, int32_t b) {
+    return k_modq(a * b);   // a, b < 2^14 => a*b < 2^28, no overflow
+}
+
+static inline int32_t k_powmod_q(int32_t base, uint32_t e) {
+    int32_t r = 1;
+    base = k_modq(base);
+    while (e) {
+        if (e & 1u) r = k_mulmod_q(r, base);
+        base = k_mulmod_q(base, base);
+        e >>= 1;
+    }
+    return r;
+}
+
+// Reverse the low `bits` bits of i -- the butterfly index permutation, free in
+// hardware (it is just wiring) and a loop in software.
+static inline int k_bitrev(int i, int bits) {
+    int r = 0;
+    for (int b = 0; b < bits; b++)
+        if (i & (1 << b)) r |= 1 << (bits - 1 - b);
+    return r;
+}
+
+// Build the two twiddle tables and n^-1 for a transform of length n (a power of
+// two, n <= 2048 for this q). Tables are stored in bit-reversed order, which is
+// what lets both loops read them sequentially:
+//   psi_rev[i]     = psi^brv(i)      psi = primitive 2n-th root of unity
+//   psi_inv_rev[i] = psi^-brv(i)
+// Called once per program, not per transform.
+static inline void k_ntt_tables(int n, int32_t *psi_rev, int32_t *psi_inv_rev,
+                                int32_t *n_inv) {
+    int bits = 0;
+    while ((1 << bits) < n) bits++;
+
+    // psi = g^((q-1)/2n) has order exactly 2n, because g generates Z_q*.
+    int32_t psi     = k_powmod_q(K_NTT_G, (uint32_t)((K_NTT_Q - 1) / (2 * n)));
+    int32_t psi_inv = k_powmod_q(psi, (uint32_t)(2 * n - 1));   // psi^(2n-1) = psi^-1
+
+    for (int i = 0; i < n; i++) {
+        int e = k_bitrev(i, bits);
+        psi_rev[i]     = k_powmod_q(psi,     (uint32_t)e);
+        psi_inv_rev[i] = k_powmod_q(psi_inv, (uint32_t)e);
+    }
+    *n_inv = k_powmod_q(n, (uint32_t)(K_NTT_Q - 2));            // Fermat inverse
+}
+
+// Forward NTT, in place. Cooley-Tukey butterflies, natural order in,
+// bit-reversed order out. n/2 * log2(n) butterflies, each one multiply-mod and
+// two add-mods -- the exact shape you would pipeline in RTL.
+static inline void k_ntt_fwd(int32_t *a, int n, const int32_t *psi_rev) {
+    int t = n;
+    for (int m = 1; m < n; m *= 2) {
+        t /= 2;
+        for (int i = 0; i < m; i++) {
+            int32_t s = psi_rev[m + i];
+            int j1 = 2 * i * t;
+            for (int j = j1; j < j1 + t; j++) {
+                int32_t u = a[j];
+                int32_t v = k_mulmod_q(a[j + t], s);
+                a[j]     = k_modq(u + v);
+                a[j + t] = k_modq(u - v);
+            }
+        }
+    }
+}
+
+// Inverse NTT, in place. Gentleman-Sande butterflies (the multiply is AFTER
+// the add/sub, the mirror image of the forward pass), bit-reversed order in,
+// natural order out, then the 1/n scaling.
+static inline void k_ntt_inv(int32_t *a, int n, const int32_t *psi_inv_rev,
+                             int32_t n_inv) {
+    int t = 1;
+    for (int m = n; m > 1; m /= 2) {
+        int j1 = 0;
+        int h = m / 2;
+        for (int i = 0; i < h; i++) {
+            int32_t s = psi_inv_rev[h + i];
+            for (int j = j1; j < j1 + t; j++) {
+                int32_t u = a[j];
+                int32_t v = a[j + t];
+                a[j]     = k_modq(u + v);
+                a[j + t] = k_mulmod_q(u - v, s);
+            }
+            j1 += 2 * t;
+        }
+        t *= 2;
+    }
+    for (int j = 0; j < n; j++)
+        a[j] = k_mulmod_q(a[j], n_inv);
+}
+
+// c = a . b, coefficient by coefficient, mod q. In the NTT domain this single
+// linear pass IS the polynomial multiplication -- which is the whole reason to
+// pay for the two transforms.
+static inline void k_poly_pointwise_q(const int32_t *a, const int32_t *b,
+                                      int32_t *c, int n) {
+    for (int i = 0; i < n; i++)
+        c[i] = k_mulmod_q(a[i], b[i]);
+}
+
+static inline void k_poly_add_q(const int32_t *a, const int32_t *b, int32_t *c,
+                                int n) {
+    for (int i = 0; i < n; i++)
+        c[i] = k_modq(a[i] + b[i]);
+}
+
+static inline void k_poly_sub_q(const int32_t *a, const int32_t *b, int32_t *c,
+                                int n) {
+    for (int i = 0; i < n; i++)
+        c[i] = k_modq(a[i] - b[i]);
+}
+
+// Uniformly random polynomial mod q, by rejection sampling. This is what a
+// real scheme expands from a seed with SHAKE; here the xorshift generator
+// stands in for the hash, so the result is reproducible on host, RTL and FPGA.
+static inline void k_poly_uniform_q(int32_t *a, int n, uint32_t *state) {
+    for (int i = 0; i < n; i++) {
+        uint32_t v;
+        do { v = k_rand(state) & 0x3FFFu; } while (v >= (uint32_t)K_NTT_Q);
+        a[i] = (int32_t)v;
+    }
+}
+
+// Centered binomial noise: each coefficient is (popcount(x) - popcount(y)) for
+// two eta-bit halves, so it lands in [-eta, eta] with a binomial shape. The
+// standard cheap sampler of Kyber/NewHope -- no Gaussian, no table.
+static inline void k_poly_cbd_q(int32_t *a, int n, int eta, uint32_t *state) {
+    for (int i = 0; i < n; i++) {
+        uint32_t r = k_rand(state);
+        int32_t s = 0;
+        for (int b = 0; b < eta; b++)
+            s += (int32_t)((r >> b) & 1u) - (int32_t)((r >> (eta + b)) & 1u);
+        a[i] = k_modq(s);
+    }
+}
+
+// Lossy compression to d bits per coefficient and back: round(2^d * x / q) and
+// its inverse. This is how a ciphertext is shrunk; the rounding error it adds
+// is part of the noise budget the decryption has to survive.
+static inline void k_compress_q(const int32_t *in, int32_t *out, int n, int d) {
+    const int32_t mask = (1 << d) - 1;
+    for (int i = 0; i < n; i++)
+        out[i] = (int32_t)(((((uint32_t)in[i] << d) + K_NTT_Q / 2u) /
+                            (uint32_t)K_NTT_Q)) & mask;
+}
+
+static inline void k_decompress_q(const int32_t *in, int32_t *out, int n, int d) {
+    for (int i = 0; i < n; i++)
+        out[i] = (int32_t)(((uint32_t)in[i] * (uint32_t)K_NTT_Q +
+                            (1u << (d - 1))) >> d);
+}
+
 #endif // LAB_KERNELS_H

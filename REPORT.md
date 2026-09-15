@@ -44,6 +44,17 @@ for all three.
 | norm              |        |       |
 | requant           |        |       |
 
+| pqcrypto kernel | cycles | share |
+|-----------------|--------|-------|
+| total           |        | 100%  |
+| ntt             |        |       |
+| intt            |        |       |
+| pointwise       |        |       |
+| polyadd         |        |       |
+| sample          |        |       |
+| compress        |        |       |
+| message         |        |       |
+
 Dominant function per app from the RV_PROFILE flamegraph:
 
 | App | Dominant function | Agrees with the table above? |
@@ -51,6 +62,7 @@ Dominant function per app from the RV_PROFILE flamegraph:
 | rxchain    |  |  |
 | tinydnn    |  |  |
 | tinyformer |  |  |
+| pqcrypto   |  |  |
 
 What did each profiling method tell you that the others did not?
 
@@ -65,12 +77,14 @@ Dominant kernel per app, and its share:
 - rxchain: _______ (___%)
 - tinydnn: _______ (___%)
 - tinyformer: _______ (___%)
+- pqcrypto: _______ (___%)
 
 Maximum whole-application speedup if that kernel cost zero cycles:
 
 - rxchain: _______×
 - tinydnn: _______×
 - tinyformer: _______×
+- pqcrypto: _______×
 
 Which kernels were cheaper than they look, and which were more expensive?
 
