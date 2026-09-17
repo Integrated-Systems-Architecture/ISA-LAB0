@@ -31,7 +31,7 @@ export SOURCE   ?= ../../sw/
 # X-HEEP `profile` target sees it. Needs a prior `verilator-run` (for the .fst).
 export RV_PROFILE ?= rv_profile
 
-.PHONY: help vendor sw-links mcu-gen host-check
+.PHONY: help vendor sw-links mcu-gen host-check profile
 
 help:
 	@echo "X-HEEP accelerator labs -- Lab 0 (profiling)"
@@ -43,7 +43,7 @@ help:
 	@echo "  make verilator-run-app PROJECT=<app>   compile + run <app>         [-> X-HEEP]"
 	@echo "  make verilator-run PROJECT=<app>   run the LAST-BUILT app           [-> X-HEEP]"
 	@echo "  make questasim-run-app PROJECT=<app>   build + run on QuestaSim    [-> X-HEEP]"
-	@echo "  make profile                       flamegraph from last run's .fst  [-> X-HEEP]"
+	@echo "  make profile                       flamegraph from last run's .fst -> flamegraph.svg"
 	@echo "  make host-check                    build+run every app on the HOST, check results"
 	@echo "  make verilator-waves               open last waveform (gtkwave)    [-> X-HEEP]"
 	@echo ""
@@ -57,14 +57,19 @@ help:
 # check its self-test. The apps are plain integer C, so the host result is
 # bit-identical to the RISC-V one: use this to check a change in seconds
 # instead of minutes, and to get the golden checksum after changing a size.
-HOST_CC   ?= cc
+# HOST_CFLAGS: pass the SAME size defines you use on the target, e.g.
+#   make host-check HOST_CFLAGS=-DNINFER=100
+# The printed checksum is then the golden value for that size: give it back to
+# the target build as -DGOLDEN=0x<value>.
+HOST_CC     ?= cc
+HOST_CFLAGS ?=
 HOST_APPS := $(notdir $(wildcard sw/applications/*))
 HOST_DIR  := build/host
 
 host-check:
 	@mkdir -p $(HOST_DIR); rc=0; \
 	for a in $(HOST_APPS); do \
-	  $(HOST_CC) -O2 -Wall -Isw/external -o $(HOST_DIR)/$$a sw/applications/$$a/main.c || exit 1; \
+	  $(HOST_CC) -O2 -Wall -Isw/external $(HOST_CFLAGS) -o $(HOST_DIR)/$$a sw/applications/$$a/main.c || exit 1; \
 	  $(HOST_DIR)/$$a | grep -E 'PASS|FAIL' || rc=1; \
 	done; exit $$rc
 
@@ -86,6 +91,22 @@ sw-links:
 # Defined here (not just forwarded) so we can inject our own config.py.
 mcu-gen:
 	$(MAKE) -C $(HEEP_DIR) mcu-gen PYTHON_X_HEEP_CFG=$(XHEEP_CFG) HEEP_EXTERNAL_ROOT=$(ROOT_DIR)
+
+# --- Profiling flamegraph ---------------------------------------------------
+# Defined here instead of forwarding: X-HEEP's own `profile` target locates the
+# waveform via `git rev-parse --show-toplevel`, which in this project resolves to
+# OUR repo root (the vendored x-heep has no .git), so it never finds the .fst.
+# We call the tool directly with the right paths. Needs a prior verilator-run.
+# PROFILE_CFG must match the CPU selected in config.py (default: cv32e20).
+PROFILE_CFG  ?= $(HEEP_DIR)/util/profile/configs/cv32e20.wal
+PROFILE_FST   = $(shell find $(HEEP_DIR)/build -name '*.fst' 2>/dev/null | head -1)
+PROFILE_OUT  ?= $(ROOT_DIR)/flamegraph.svg
+
+profile:
+	@test -n "$(PROFILE_FST)" || { echo "no .fst under $(HEEP_DIR)/build -- run 'make verilator-run-app PROJECT=<app>' first"; exit 1; }
+	$(RV_PROFILE) --elf $(HEEP_DIR)/sw/build/main.elf --fst $(PROFILE_FST) \
+	              --cfg $(PROFILE_CFG) --out $(PROFILE_OUT)
+	@echo "flamegraph: $(PROFILE_OUT)"
 
 # --- Forward everything else to X-HEEP --------------------------------------
 # Only once X-HEEP is vendored (before that, external.mk does not exist yet and

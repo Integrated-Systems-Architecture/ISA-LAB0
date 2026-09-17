@@ -14,3 +14,6 @@ build/
 *.elf
 *.o
 __pycache__/
+
+# Generated profiling output (commit the copies under figures/ instead)
+flamegraph.svg

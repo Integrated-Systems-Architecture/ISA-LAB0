@@ -1,0 +1,23 @@
+# Python packages for the labs. Install AFTER `make vendor`:
+#     pip install -r requirements.txt
+#
+# This is X-HEEP's own list (x-heep/util/python-requirements.txt) with one
+# change: `yamlfmt` is dropped. It pins `ruamel.yaml<0.16`, whose C extension
+# no longer builds on Python >= 3.11, and nothing in X-HEEP uses it.
+
+gitpython==3.1.25
+hjson==3.0.2
+pyyaml==6.0.2
+mako==1.1.6
+jsonref==0.2
+black==24.8.0
+tabulate==0.9.0
+deepdiff
+
+# SoC build (X-HEEP forks, with the OpenTitan-specific changes)
+git+https://github.com/x-heep/fusesoc.git@ot#egg=fusesoc
+git+https://github.com/x-heep/edalize.git
+
+# Flamegraph profiler used by `make profile`. It pulls in pylibfst, whose build
+# needs `export CMAKE_POLICY_VERSION_MINIMUM=3.5` on CMake >= 4 (see SETUP.md).
+git+https://github.com/vlsi-lab/rv_profile.git
