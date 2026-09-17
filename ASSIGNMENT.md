@@ -3,11 +3,13 @@
 **Groups of 3. Deliverable: this file, filled in, committed to your repository.**
 
 Goal: run four complete C applications on X-HEEP, measure where their cycles
-go, and propose one hardware accelerator that you will build in Lab 1.
+go, and start thinking about which kernel deserves a hardware accelerator.
 
-This lab is a gate — you cannot start Lab 1 until the proposal is signed off.
-There is no HDL here. The work is *understanding where the time goes* before
-you build anything.
+There is no HDL here, and no design to commit to yet: after one week of
+lectures nobody is expected to have a finished architecture. The work is
+*understanding where the time goes* before you build anything. Step 8 collects
+your first ideas; we discuss them with you, and the accelerator is decided
+together at the start of Lab 1.
 
 Before you start: finish [SETUP.md](SETUP.md), then walk through
 [TUTORIAL.md](TUTORIAL.md) once with `rxchain`.
@@ -232,53 +234,59 @@ per-kernel **shares** the same? What does that tell you about fixed costs
 
 ---
 
-## Step 8 — Choose one application and propose an accelerator
+## Step 8 — Start thinking: which kernel would you accelerate?
 
-Pick the kernel you will build in Lab 1. It must carry real weight in at least
-one application — that application is what you will run end to end in Lab 3.
+First ideas, not a design. You are **not** committing to anything here — you
+have one week of lectures behind you, and Lab 1 starts by discussing what you
+wrote in this step. Wrong-but-argued beats vague-but-safe.
 
-| | |
-|---|---|
-| Chosen application | _____ |
-| Kernel to accelerate | _____ (function in `sw/external/kernels.h`) |
-| Measured share of that app | ___% |
-| Amdahl ceiling | _____× |
-| Realistic target speedup | _____× |
+**Q8.1 Candidates.** Two kernels you would consider, best first. They must
+carry real weight in at least one application — your numbers from Step 3 and
+Step 6 decide that, not intuition.
 
-**Q8.1 Interface.** Choose one and justify it from the *shape* of the kernel
-(short fixed-latency operation on registers vs. block/streaming work on memory):
+| | Application | Kernel (function in `kernels.h`) | Share | Amdahl ceiling |
+|---|---|---|---|---|
+| 1st choice | _____ | _____ | ___% | _____× |
+| 2nd choice | _____ | _____ | ___% | _____× |
 
-☐ CV-XIF (instruction-extension co-processor)  ☐ OBI + register file (memory-mapped peripheral)
-
-> _____
-
-**Q8.2 Datapath sketch.** Block diagram or description: datapath, word widths,
-how many operations per cycle, how data gets in and out.
+**Q8.2 Why this one?** What in the C code makes it a good target for hardware?
+Look for: a regular loop with a fixed trip count, independent operations that
+could run in the same cycle, integer/fixed-point arithmetic, few data-dependent
+branches, data that arrives in a predictable order.
 
 > _____
 
-**Q8.3 Where the speedup comes from.** Per-element cycle cost in software
-(count the instructions in the C kernel) versus your hardware, times the number
-of elements.
+**Q8.3 Why not the other one?** One or two sentences on what makes your second
+choice harder or less rewarding.
 
 > _____
 
-**Q8.4 Reuse.** Which of the four applications would this accelerator speed up,
-and by how much in each? Use your measured shares.
+**Q8.4 Reuse.** Which of the four applications would your first choice speed
+up, and by roughly how much in each? Use the shares you measured.
 
 > _____
 
-**Q8.5 Risks.** What could make the real speedup much smaller than Q8.3
-(memory bandwidth, data movement over the interface, setup cost per call)?
+**Q8.5 How would data reach it?** No RTL, no block diagram — just say which of
+these two feels right and why, from the *shape* of the kernel (one short
+operation on a few registers vs. a block of data in memory):
+
+☐ CV-XIF — an extra instruction the CPU issues, result back in a register
+☐ OBI + register file — a peripheral you write data to, start, and read back
+
+> _____ (you may change your mind in Lab 1; say what you are unsure about)
+
+**Q8.6 Open questions.** What do you still need to know before you could design
+this? List them — they are the agenda of the Lab 1 kickoff.
 
 > _____
 
-Before writing any RTL in Lab 1, read the CORDIC case study: *Example
-Cookbook*, ch. 10, with its code in `examplecookbook/code/cordic/` (see the
-reference list in [README.md](README.md#reference-material)). The
-`nco` kernel of `rxchain` is bit-exact with it. That is the structure Lab 1
-asks of you: one golden model, RTL that matches it bit for bit, one
-self-checking testbench that runs on more than one simulator.
+### Before Lab 1
+
+Read the CORDIC case study: *Example Cookbook*, ch. 10, with its code in
+`examplecookbook/code/cordic/` (see the reference list in
+[README.md](README.md#reference-material)). The `nco` kernel of `rxchain` is
+bit-exact with it. That is the structure Lab 1 asks of you: one golden model,
+RTL that matches it bit for bit, one self-checking testbench.
 
 ---
 
@@ -291,8 +299,8 @@ self-checking testbench that runs on more than one simulator.
   submission.
 
 Nothing is checked automatically. We read the file and discuss it with your
-group: be ready to reproduce any number in it on your machine, and to explain
-why you chose the kernel in Step 8.
+group: be ready to reproduce any number in it on your machine, and to argue
+the candidates you listed in Step 8.
 
 Do **not** commit `x-heep/`, `build/` or `flamegraph.svg` — they are generated,
 and they are in `.gitignore`.

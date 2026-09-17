@@ -1,4 +1,4 @@
-# Lab 0 — Profiling and accelerator proposal
+# Lab 0 — Profiling and first accelerator ideas
 
 MSc lab, groups of 3. Over four activities you profile C applications running on
 the **X-HEEP** RISC-V microcontroller, pick one, and build a custom hardware
@@ -6,7 +6,7 @@ accelerator for it:
 
 | | | |
 |---|---|---|
-| **Lab 0** | profile the provided apps, choose one, propose an accelerator | *this repository* |
+| **Lab 0** | profile the provided apps and work out which kernel is worth accelerating | *this repository* |
 | Lab 1 | implement the accelerator standalone (RTL + testbench), simulate and synthesize | |
 | Lab 2 | optimize it (retiming, pipelining, folding, arithmetic) and compare PPA with Lab 1 | |
 | Lab 3 | integrate it into X-HEEP over CV-XIF or OBI+REG, write the C driver, measure the real speedup | |
@@ -18,7 +18,9 @@ accelerator for it:
 2. **[TUTORIAL.md](TUTORIAL.md)** — a guided run of one application,
    `rxchain`, with the output you should see at every step.
 3. **[ASSIGNMENT.md](ASSIGNMENT.md)** — what you must do and hand in. Fill it
-   in and commit it; that file *is* the report.
+   in and commit it; that file *is* the report. Its last step asks for your
+   first ideas about an accelerator, not a design: the accelerator is chosen
+   together at the start of Lab 1.
 
 Quick check that your machine is ready:
 
@@ -133,9 +135,9 @@ vendored X-HEEP with the right `PROJECT`, `SOURCE` and config.
 
 ```bash
 git add ASSIGNMENT.md figures/
-git commit -m "Lab 0: profiling results and accelerator proposal"
+git commit -m "Lab 0: profiling results and accelerator candidates"
 git push
-gh release create lab0-final --title "Lab 0" --notes "Profiling results and accelerator proposal"
+gh release create lab0-final --title "Lab 0" --notes "Profiling results and accelerator candidates"
 ```
 
 Without the `gh` CLI, do the same from the repository page on GitHub:
