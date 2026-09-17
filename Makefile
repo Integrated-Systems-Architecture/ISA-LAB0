@@ -42,7 +42,6 @@ help:
 	@echo "  make app PROJECT=<app>             compile <app> out-of-tree       [-> X-HEEP]"
 	@echo "  make verilator-run-app PROJECT=<app>   compile + run <app>         [-> X-HEEP]"
 	@echo "  make verilator-run PROJECT=<app>   run the LAST-BUILT app           [-> X-HEEP]"
-	@echo "  make questasim-run-app PROJECT=<app>   build + run on QuestaSim    [-> X-HEEP]"
 	@echo "  make profile                       flamegraph from last run's .fst -> flamegraph.svg"
 	@echo "  make host-check                    build+run every app on the HOST, check results"
 	@echo "  make verilator-waves               open last waveform (gtkwave)    [-> X-HEEP]"

@@ -37,8 +37,8 @@ pinned snapshot instead of a git submodule? (2–3 sentences.)
 
 > _____
 
-**Q1.2** `x-heep/` is in `.gitignore`. What would a grader have to run to
-reproduce your exact SoC from your repository alone?
+**Q1.2** `x-heep/` is in `.gitignore`. Starting from your repository alone,
+which commands reproduce your exact SoC, and which file fixes the revision?
 
 > _____
 
@@ -214,7 +214,9 @@ Compare it with the ceiling above.
 ## Step 7 — Scaling: small in simulation, large on hardware
 
 RTL simulation is ~1000× slower than the real SoC, so the defaults are small.
-Raise the repetition knob and check the profile shares stay the same:
+In Lab 3 you will run these apps on an FPGA and can raise the sizes freely; here
+everything runs on Verilator, so raise the repetition knob just enough to check
+that the profile shares stay the same:
 
 ```bash
 make host-check HOST_CFLAGS=-DNBLOCK=10          # prints the new golden checksum
@@ -272,38 +274,25 @@ and by how much in each? Use your measured shares.
 > _____
 
 Before writing any RTL in Lab 1, read the CORDIC case study: *Example
-Cookbook*, ch. 10, with its code in `books/examplecookbook/code/cordic/`. The
+Cookbook*, ch. 10, with its code in `examplecookbook/code/cordic/` (see the
+reference list in [README.md](README.md#reference-material)). The
 `nco` kernel of `rxchain` is bit-exact with it. That is the structure Lab 1
 asks of you: one golden model, RTL that matches it bit for bit, one
 self-checking testbench that runs on more than one simulator.
 
 ---
 
-## Step 9 — Optional: run on the FPGA
+## What you hand in
 
-```bash
-make vivado-fpga FPGA_BOARD=pynq-z2
-make vivado-fpga-pgm FPGA_BOARD=pynq-z2
-make run-fpga-flash-load PROJECT=tinyformer
-```
+- **This file**, every `_____` filled with your own measurements.
+- **`figures/`** with one flamegraph per application.
+- A **release** of your repository, tagged `lab0-final`, published after those
+  commits (see [README.md](README.md#what-you-hand-in)). The release is the
+  submission.
 
-On the board a run costs microseconds instead of simulated minutes, so raise
-`NINFER` / `NBLOCK` / `NROUND` and measure a throughput. Not required — but the
-number you get here is the baseline your Lab 3 speedup is measured against.
+Nothing is checked automatically. We read the file and discuss it with your
+group: be ready to reproduce any number in it on your machine, and to explain
+why you chose the kernel in Step 8.
 
-> _optional: board, sizes used, cycles or wall-clock per run, comparison with
-> the Verilator number_
-
----
-
-## How this is graded
-
-| | |
-|---|---|
-| All four apps run and print `PASS` | required |
-| Steps 3, 4, 6 filled with your own numbers | 40% |
-| Analysis in Q3.1, Q6.1–Q6.3, Q7.1 | 30% |
-| Proposal in Step 8, interface justified from the kernel's shape | 30% |
-| Step 9 | bonus |
-
-Commit **this file** and `figures/`. Do **not** commit `x-heep/` or `build/`.
+Do **not** commit `x-heep/`, `build/` or `flamegraph.svg` — they are generated,
+and they are in `.gitignore`.

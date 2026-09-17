@@ -15,7 +15,7 @@
 // same noise, same compression, same failure analysis -- shrunk so a whole
 // keygen/encrypt/decrypt round fits in an RTL simulation. The ring is
 // Z_q[x]/(x^n+1) with q = 12289 and n = 256; all arithmetic is exact integer
-// arithmetic mod q, so host, Verilator, QuestaSim and FPGA agree bit for bit.
+// arithmetic mod q, so host, Verilator and FPGA agree bit for bit.
 //
 // Six kernels, six very different shapes:
 //   * NTT / INTT   the number-theoretic transform: the FFT butterfly with the

@@ -177,7 +177,7 @@ make host-check                            # ~5 s   builds+runs all 4 apps on yo
 make mcu-gen                               # ~30 s  generates the SoC from config.py
 make verilator-build                       # ~5 min builds the simulation model
 make verilator-run-app PROJECT=rxchain     # ~1 min compiles rxchain and simulates it
-make profile                               # ~1 min flamegraph.svg from the last run
+make profile                               # ~2 min flamegraph.svg from the last run
 ```
 
 The setup is correct when `make host-check` prints four `PASS` lines and the

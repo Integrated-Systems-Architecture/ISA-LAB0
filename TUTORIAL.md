@@ -38,8 +38,8 @@ That is the point: the accelerator you build in Lab 1 replaces one of those
 functions, and speeds up every app that calls it.
 
 The app is **self-checking**: it prints `PASS` or `FAIL` against a golden
-checksum, so the same source tells you it is correct on your laptop, on
-Verilator, on QuestaSim and on the FPGA.
+checksum, so the same source tells you it is correct on your laptop and on
+Verilator (and, in Lab 3, on the FPGA).
 
 ---
 
@@ -178,9 +178,10 @@ Every app has compile-time knobs:
 | `tinyformer` | fixed 2-layer encoder | `NINFER` (1) |
 | `pqcrypto` | `N` (256, ring degree) | `NROUND` (1) |
 
-The defaults are small so an RTL simulation finishes in about a minute. On the
-FPGA, raise the repetition knob and measure a throughput instead of a single
-latency.
+The defaults are small so an RTL simulation finishes in about a minute. Lab 0
+runs entirely on Verilator: keep the sizes small, and raise a knob only to see
+what it does to the per-kernel shares. (In Lab 3 the same apps run on an FPGA,
+where a large size costs microseconds instead of simulated minutes.)
 
 **Any size change changes the golden checksum**, so a run at a new size prints
 `FAIL` until you supply the new value. Get it from the host build, which takes
@@ -210,7 +211,6 @@ make verilator-run-app PROJECT=<app>          # compile <app> + simulate it
 make app PROJECT=<app> COMPILER_FLAGS="..."   # compile only
 make profile                                  # flamegraph.svg from the last run
 make verilator-waves                          # GTKWave on the last run
-make questasim-run-app PROJECT=<app>          # same run on QuestaSim (if licensed)
 ```
 
 Apps: `rxchain`, `tinydnn`, `tinyformer`, `pqcrypto`.

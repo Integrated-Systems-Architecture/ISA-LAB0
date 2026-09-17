@@ -55,8 +55,8 @@ of them — `k_fir_i16`, `k_cordic_rot`, `k_matmul_i8_bt` and `k_conv2d_relu_i8`
 are each called by real work in at least one app.
 
 Every app self-checks: it compares its result with a golden checksum and prints
-`PASS` or `FAIL`, so the same source tells you it is correct on your laptop, on
-Verilator, on QuestaSim and on the FPGA.
+`PASS` or `FAIL`, so the same source tells you it is correct on your laptop and
+on Verilator — and, in Lab 3, on the FPGA.
 
 ## Tools you must understand (not just invoke)
 
@@ -70,8 +70,10 @@ The Makefile wraps them, but you will be asked to explain what they do:
 
 ## Reference material
 
-The course cookbooks (the `books/` directory of the course material, PDFs
-included) cover exactly these tools:
+The course cookbooks live in their own repository,
+<https://github.com/Integrated-Systems-Architecture/ISA-BOOKS> (PDFs included;
+in the course repository they are the `books/` submodule — `git submodule
+update --init books`). They cover exactly these tools:
 
 | Question | Where |
 |----------|-------|
@@ -81,7 +83,7 @@ included) cover exactly these tools:
 | `reggen` / register interfaces (Lab 3) | *FuseSoC Cookbook*, ch. 4 |
 | Verilator, waveforms, self-checking testbenches | *Simulation Cookbook*, ch. 8 |
 | Python-driven verification, cocotb | *Simulation Cookbook*, ch. 9 |
-| The CORDIC case study — golden model, VHDL, SystemVerilog, six testbenches | *Example Cookbook*, ch. 10, code in `books/examplecookbook/code/cordic/` |
+| The CORDIC case study — golden model, VHDL, SystemVerilog, six testbenches | *Example Cookbook*, ch. 10, code in `examplecookbook/code/cordic/` |
 | VHDL/SystemVerilog side by side, coding style | *Design Cookbook*, ch. 1–4 |
 | Testbench structure, UVM (Labs 1–2) | *Verification Cookbook*, ch. 5–7 |
 | git and GitHub workflow for the group | *Git Cookbook*, ch. 1–3 |
@@ -120,8 +122,26 @@ into `sw/` so an out-of-tree build finds the generated device headers. Target
 names mirror X-HEEP's own, so you learn the real flow; each forwards to the
 vendored X-HEEP with the right `PROJECT`, `SOURCE` and config.
 
-## What you commit
+## What you hand in
 
-`ASSIGNMENT.md`, filled in, and the flamegraphs under `figures/`. Never commit
-`x-heep/`, `build/` or `flamegraph.svg` — they are generated, and they are in
-`.gitignore`.
+1. Commit `ASSIGNMENT.md`, filled in, and the flamegraphs under `figures/`.
+   Never commit `x-heep/`, `build/` or `flamegraph.svg` — they are generated,
+   and they are in `.gitignore`.
+2. **Publish a release of your repository.** The release is the submission: we
+   read the code and the report at that tag, so anything committed afterwards
+   does not count.
+
+```bash
+git add ASSIGNMENT.md figures/
+git commit -m "Lab 0: profiling results and accelerator proposal"
+git push
+gh release create lab0-final --title "Lab 0" --notes "Profiling results and accelerator proposal"
+```
+
+Without the `gh` CLI, do the same from the repository page on GitHub:
+*Releases → Draft a new release → tag* `lab0-final` *→ Publish release*.
+
+One release per group, from the group repository. Late fixes mean a new release
+— tell us, because we take the latest one before the deadline.
+
+See the *Git Cookbook*, ch. 3, for tags, releases and the group workflow.

@@ -15,7 +15,7 @@
 // and an integer layer norm. The weights are pseudo-random from a fixed seed,
 // so it predicts nothing meaningful -- but every tensor, projection and
 // normalization is real, the arithmetic is bit-exact and reproduces identically
-// on host, Verilator, QuestaSim and FPGA.
+// on host, Verilator and FPGA.
 //
 // Why this app exists: the attention app profiles one attention block in
 // isolation. Here the same three kernels sit inside a whole network, next to
@@ -43,7 +43,7 @@
 #define NCLASS   4                  // classifier outputs
 
 #ifndef NINFER
-#define NINFER  1                   // forward passes per run (raise on FPGA)
+#define NINFER  1                   // forward passes per run (raise in Lab 3)
 #endif
 
 // Fixed-point rescale shifts: int32 accumulator -> int8 activation.

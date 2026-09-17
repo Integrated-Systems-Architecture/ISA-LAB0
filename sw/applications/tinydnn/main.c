@@ -12,7 +12,7 @@
 // and quantized to int8 weights / int32 accumulators (Jacob et al., CVPR 2018).
 // Weights are pseudo-random from a fixed seed, so this classifies nothing
 // meaningful -- but every layer, buffer and requantization step is real, the
-// arithmetic is bit-exact and identical on host, Verilator, QuestaSim and FPGA,
+// arithmetic is bit-exact and identical on host, Verilator and FPGA,
 // and the cost profile is the cost profile of a real quantized CNN.
 //
 // Why this app exists: the single-kernel benchmarks (matmul, tinyconv, fir)
@@ -42,7 +42,7 @@
 #define NCLASS 10                   // output classes
 
 #ifndef NINFER
-#define NINFER 1                    // inferences per run (raise it on the FPGA)
+#define NINFER 1                    // inferences per run (raise it in Lab 3)
 #endif
 
 // Requantization shifts: int32 accumulator -> int8 activation. Picked so the

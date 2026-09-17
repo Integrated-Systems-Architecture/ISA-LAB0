@@ -107,7 +107,7 @@ static inline uint32_t read_minstret(void) { return 0; }
 // --- Self-check -------------------------------------------------------------
 //
 // Every app ends with a checksum compared against a golden constant, so a run
-// on the Verilator model, on QuestaSim or on the FPGA says PASS/FAIL by itself
+// on the Verilator model or on the FPGA says PASS/FAIL by itself
 // instead of asking you to eyeball a hex number. Returns the process exit code.
 static inline int check_result(const char *name, uint32_t got, uint32_t want) {
     if (got == want) {
