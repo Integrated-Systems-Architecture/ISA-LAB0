@@ -5,6 +5,11 @@
 # change: `yamlfmt` is dropped. It pins `ruamel.yaml<0.16`, whose C extension
 # no longer builds on Python >= 3.11, and nothing in X-HEEP uses it.
 
+# reggen (the register generator X-HEEP runs during mcu-gen) still imports
+# pkg_resources, which setuptools 81 removed and which pip no longer installs
+# by default.
+setuptools<81
+
 gitpython==3.1.25
 hjson==3.0.2
 pyyaml==6.0.2

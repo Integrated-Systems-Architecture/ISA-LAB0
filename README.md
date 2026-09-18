@@ -13,8 +13,9 @@ accelerator for it:
 
 ## Start here
 
-1. **[SETUP.md](SETUP.md)** — install the toolchain (macOS, Ubuntu/Linux, WSL2).
-   Once per machine, about an hour.
+1. **[SETUP.md](SETUP.md)** — the toolchain. On the **ISA server** it is already
+   installed: `source ~luigi.giuffrida/isa-tools/init.sh` and you are done. On
+   your own machine (macOS, Ubuntu/Linux, WSL2) budget about an hour.
 2. **[TUTORIAL.md](TUTORIAL.md)** — a guided run of one application,
    `rxchain`, with the output you should see at every step.
 3. **[ASSIGNMENT.md](ASSIGNMENT.md)** — what you must do and hand in. Fill it

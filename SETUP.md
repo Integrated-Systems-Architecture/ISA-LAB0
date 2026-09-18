@@ -5,9 +5,44 @@ RISC-V and simulate them. Do this **once per machine**, before the tutorial.
 
 Budget about an hour, most of it unattended downloads and compiles.
 
-Supported hosts: **Ubuntu/Debian Linux**, **Windows + WSL2 (Ubuntu)**, **macOS
-(Apple Silicon or Intel)**. One machine per group is enough to get started, but
+Supported hosts: **the ISA server** (nothing to install, see below),
+**Ubuntu/Debian Linux**, **Windows + WSL2 (Ubuntu)**, **macOS (Apple Silicon or
+Intel)**. One machine per group is enough to get started, but
 everyone should end up with a working install.
+
+---
+
+## The short way: use the ISA server
+
+Everything below is already installed on **isaserver**. If you work there, skip
+the whole installation and source the shared environment instead:
+
+```bash
+ssh <your-user>@isaserver
+source ~luigi.giuffrida/isa-tools/init.sh
+```
+
+It prints what it activated:
+
+```
+ISA labs environment ready:
+  python    3.11.16
+  verilator 5.040
+  riscv gcc 14.1.0   (riscv32-corev-elf-gcc)
+  fusesoc   0.2.dev3+gc36dffc85
+  verible   v0.0-4023-gc1271a00
+```
+
+Run it in every new shell, or add that one line to your `~/.bashrc`. Then clone
+your group repository into your own home and follow
+[TUTORIAL.md](TUTORIAL.md) from step 3 — `make host-check`, `make vendor`,
+`make mcu-gen`, `make verilator-build` all work as written.
+
+Nothing of the shared directory is writable by you, and nothing needs to be:
+your build lives in your own repository.
+
+Install locally (the rest of this file) if you prefer to work on your laptop, or
+if you want waveforms without X forwarding.
 
 ---
 
@@ -168,7 +203,30 @@ you a different 5.x release; it usually works, but the course only supports
 
 ---
 
-## 5. Verify the whole flow
+## 5. Verible
+
+`make mcu-gen` formats the RTL it generates and **fails if Verible is
+missing**. Install the version X-HEEP pins:
+
+```bash
+export VERIBLE_VERSION=v0.0-4023-gc1271a00
+curl -sSL -o verible.tar.gz \
+  https://github.com/chipsalliance/verible/releases/download/${VERIBLE_VERSION}/verible-${VERIBLE_VERSION}-linux-static-x86_64.tar.gz
+mkdir -p ~/tools/verible
+tar -xzf verible.tar.gz --strip-components=1 -C ~/tools/verible
+export PATH=$HOME/tools/verible/bin:$PATH
+```
+
+macOS: no prebuilt release, use the `-macOS` asset from the same page if it is
+there, otherwise `brew install verible`.
+
+Check:
+
+```bash
+verible-verilog-format --version
+```
+
+## 6. Verify the whole flow
 
 From `lab0`, with the conda env active and `RISCV_XHEEP` set:
 
@@ -191,7 +249,7 @@ Now go to [TUTORIAL.md](TUTORIAL.md).
 
 ---
 
-## 6. When it breaks
+## 7. When it breaks
 
 | Symptom | Cause / fix |
 |---------|-------------|
@@ -204,6 +262,10 @@ Now go to [TUTORIAL.md](TUTORIAL.md).
 | fusesoc/verilator errors mentioning `%Error: ... unsupported` | wrong Verilator version — `verilator --version` must say 5.040 |
 | `make profile` says `no .fst under x-heep/build` | run `make verilator-run-app PROJECT=<app>` first; the profiler reads that run's waveform |
 | `rv_profile: command not found` | conda env not activated, or `pip install -r requirements.txt` not done |
+| `### ERROR: 'verible-verilog-format' is not in PATH.` | step 5 not done, or the `verible/bin` directory is not on `PATH` |
+| `Error: Could not parse Verilator version from the output.` | you installed Verilator from conda or a distro package; X-HEEP looks for the `rev vX.Y` string that only an upstream build prints — build 5.040 from source as in step 4 |
+| `no such instruction: 'andi a5,a5,1'` while building the boot ROM | a host compiler is being used for RISC-V code: some environment exports `GCC`/`CC`/`OBJCOPY` (conda's compiler packages do). `unset GCC CC CXX OBJCOPY OBJDUMP` and retry |
+| `cc1: /lib64/libc.so.6: version 'GLIBC_2.25' not found` | the toolchain binaries are newer than your glibc — use a build that matches your distribution (on CentOS 7, Embecosm's `centos7` CORE-V package) |
 | GTKWave opens nothing on WSL | no WSLg/X server; copy the `.fst` to Windows and open it with a Windows GTKWave build |
 | Everything is slow under WSL | repository is on `/mnt/c`; move it to `~` |
 | `realpath: illegal option -- -` (macOS) | you overrode `SOURCE`; leave the Makefile default (`../../sw/`) |

@@ -31,7 +31,7 @@ export SOURCE   ?= ../../sw/
 # X-HEEP `profile` target sees it. Needs a prior `verilator-run` (for the .fst).
 export RV_PROFILE ?= rv_profile
 
-.PHONY: help vendor sw-links mcu-gen host-check profile
+.PHONY: help vendor sw-links mcu-gen host-check host profile
 
 help:
 	@echo "X-HEEP accelerator labs -- Lab 0 (profiling)"
@@ -44,6 +44,7 @@ help:
 	@echo "  make verilator-run PROJECT=<app>   run the LAST-BUILT app           [-> X-HEEP]"
 	@echo "  make profile                       flamegraph from last run's .fst -> flamegraph.svg"
 	@echo "  make host-check                    build+run every app on the HOST, check results"
+	@echo "                                     (alias: make host)"
 	@echo "  make verilator-waves               open last waveform (gtkwave)    [-> X-HEEP]"
 	@echo ""
 	@echo "  [-> X-HEEP] = forwarded to the vendored X-HEEP via external.mk"
@@ -60,15 +61,22 @@ help:
 #   make host-check HOST_CFLAGS=-DNINFER=100
 # The printed checksum is then the golden value for that size: give it back to
 # the target build as -DGOLDEN=0x<value>.
+# -std=c99: the system compiler on some machines (e.g. gcc 4.8 on CentOS 7)
+# still defaults to gnu89, which rejects `for (int i = ...)`.
 HOST_CC     ?= cc
+HOST_STD    ?= -std=c99
 HOST_CFLAGS ?=
 HOST_APPS := $(notdir $(wildcard sw/applications/*))
 HOST_DIR  := build/host
 
+# `make host` is an alias: the target has to be defined before external.mk is
+# included, or its catch-all forwards it to X-HEEP and the error is confusing.
+host: host-check
+
 host-check:
 	@mkdir -p $(HOST_DIR); rc=0; \
 	for a in $(HOST_APPS); do \
-	  $(HOST_CC) -O2 -Wall -Isw/external $(HOST_CFLAGS) -o $(HOST_DIR)/$$a sw/applications/$$a/main.c || exit 1; \
+	  $(HOST_CC) -O2 -Wall $(HOST_STD) -Isw/external $(HOST_CFLAGS) -o $(HOST_DIR)/$$a sw/applications/$$a/main.c || exit 1; \
 	  $(HOST_DIR)/$$a | grep -E 'PASS|FAIL' || rc=1; \
 	done; exit $$rc
 
