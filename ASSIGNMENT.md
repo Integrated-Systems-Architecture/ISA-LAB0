@@ -269,12 +269,17 @@ up, and by roughly how much in each? Use the shares you measured.
 
 > _____
 
-**Q8.5 How would data reach it?** No RTL, no block diagram — just say which of
-these two feels right and why, from the *shape* of the kernel (one short
-operation on a few registers vs. a block of data in memory):
+**Q8.5 How would data reach it?** No RTL, no block diagram. The accelerator
+will be a memory-mapped peripheral: software writes its configuration into
+registers, it reads and writes the payload itself over the bus. So, from the
+*shape* of the kernel:
 
-☐ CV-XIF — an extra instruction the CPU issues, result back in a register
-☐ OBI + register file — a peripheral you write data to, start, and read back
+- what would software have to tell it before it starts (addresses, lengths,
+  coefficients, modes)? > _____
+- how much data does one invocation work on, and where does that data live?
+  > _____
+- how long would one invocation run — can the CPU wait for it, or should it go
+  and do something else? > _____
 
 > _____ (you may change your mind in Lab 1; say what you are unsure about)
 

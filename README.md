@@ -9,7 +9,7 @@ accelerator for it:
 | **Lab 0** | profile the provided apps and work out which kernel is worth accelerating | *this repository* |
 | Lab 1 | implement the accelerator standalone (RTL + testbench), simulate and synthesize | |
 | Lab 2 | optimize it (retiming, pipelining, folding, arithmetic) and compare PPA with Lab 1 | |
-| Lab 3 | integrate it into X-HEEP over CV-XIF or OBI+REG, write the C driver, measure the real speedup | |
+| Lab 3 | integrate it into X-HEEP over OBI+REG, write the C driver, measure the real speedup | |
 
 ## Start here
 
@@ -102,6 +102,70 @@ an application — the bit-exactness is Lab 1's problem — but read that chapte
 before Lab 1. It is the shape your own work should have: one golden model, RTL
 that matches it bit for bit, and a self-checking testbench that runs on more
 than one simulator.
+
+## Papers: how others built it
+
+Before you commit to a kernel in Step 8 of the assignment, look at how others
+accelerated it: what they put in hardware, what they left in software, and what
+it cost. Skim the abstracts and figures; you do not need to read them all.
+
+Links go to IEEE Xplore: full text from the Politecnico network or the VPN,
+and most have an author copy or arXiv version if you search the title. The
+master list, with a note on what to take from each paper, is
+[`READING.md` in ISA-BOOKS](https://github.com/Integrated-Systems-Architecture/ISA-BOOKS/blob/main/READING.md) (`books/READING.md` in the course
+repository).
+
+**Why a memory-mapped accelerator with its own data port** — read one of these first
+
+- [An Analysis of Accelerator Coupling in Heterogeneous Architectures](https://ieeexplore.ieee.org/document/7167228) — Cota, …, Carloni, DAC 2015. *in-pipeline vs bus-attached accelerators, and when each wins.*
+- [Agile SoC Development with Open ESP](https://ieeexplore.ieee.org/document/9256819) — Mantovani, …, Carloni, ICCAD 2020. *registers + DMA + interrupt socket around an accelerator.*
+- [X-HEEP: An Open-Source, Configurable and Extendible RISC-V Platform for TinyAI Applications](https://ieeexplore.ieee.org/document/11130281) — Machetti, Schiavone, …, Atienza, ISVLSI 2025. *the platform you integrate into.*
+- [An IoT Endpoint SoC for Secure and Energy-Efficient Near-Sensor Analytics (Fulmine)](https://ieeexplore.ieee.org/document/7927716) — Conti, …, Rossi, Benini, TCAS-I 2017. *conv and crypto engines driven by memory-mapped registers.*
+- [Scalable and RISC-V Programmable Near-Memory Computing Architectures for Edge Nodes](https://ieeexplore.ieee.org/document/10964076) — Caon, …, Masera, Martina, Atienza, TETC 2025. *accelerators on the X-HEEP bus as OBI slaves.*
+- [X-TRELA: An Open-Source Streaming Elastic CGRA With ASIC Implementation for the Edge](https://ieeexplore.ieee.org/document/11577129) — Vázquez, Miranda, Rodríguez, Otero (UPM), IEEE Access 2026. *a CGRA on X-HEEP, taped out, open source.*
+
+**rxchain** — CORDIC, FIR, decimation, isqrt
+
+- [50 Years of CORDIC: Algorithms, Architectures, and Applications](https://ieeexplore.ieee.org/document/5089431) — Meher et al., TCAS-I 2009. *iterative vs unrolled vs pipelined, scale factor.*
+- [The CORDIC Trigonometric Computing Technique](https://ieeexplore.ieee.org/document/5222693) — Volder, IRE Trans. Electronic Computers 1959. *the original.*
+- [Uniformly Distributed CORDIC](https://ieeexplore.ieee.org/document/10972359) — Garrido, Medina, Paz, López-Vallejo (UPM), TCAS-I 2025. *a recent rotator design.*
+- [Methods of Mapping from Phase to Sine Amplitude in Direct Digital Synthesis](https://ieeexplore.ieee.org/document/585137) — Vankka, IEEE Trans. UFFC 1997. *NCO alternatives to CORDIC.*
+- [An Economical Class of Digital Filters for Decimation and Interpolation](https://ieeexplore.ieee.org/document/1163535) — Hogenauer, TASSP 1981. *CIC: decimation without multipliers.*
+- [Applications of Distributed Arithmetic to Digital Signal Processing: A Tutorial Review](https://ieeexplore.ieee.org/document/29648) — White, IEEE ASSP Magazine 1989. *FIR with lookup tables instead of multipliers.*
+- [Subexpression Sharing in Filters Using Canonic Signed Digit Multipliers](https://ieeexplore.ieee.org/document/539000) — Hartley, TCAS-II 1996. *fixed coefficients as shared shifts and adds.*
+- [Use of Minimum-Adder Multiplier Blocks in FIR Digital Filters](https://ieeexplore.ieee.org/document/466647) — Dempster, Macleod, TCAS-II 1995. *multiple-constant multiplication.*
+- [A New Non-Restoring Square Root Algorithm and Its VLSI Implementations](https://ieeexplore.ieee.org/document/563604) — Li, Chu, ICCD 1996. *isqrt, iterative and pipelined.*
+
+**tinydnn** — convolution and linear layers
+
+- [Why Systolic Architectures?](https://ieeexplore.ieee.org/document/1653825) — Kung, IEEE Computer 1982. *operand reuse, the founding argument.*
+- [Efficient Processing of Deep Neural Networks: A Tutorial and Survey](https://ieeexplore.ieee.org/document/8114708) — Sze, Chen, Yang, Emer, Proc. IEEE 2017. *loop nests and dataflows.*
+- [Eyeriss: A Spatial Architecture for Energy-Efficient Dataflow for CNNs](https://ieeexplore.ieee.org/document/7551407) — Chen, Emer, Sze, ISCA 2016. *dataflow comparison.*
+- [Eyeriss: An Energy-Efficient Reconfigurable Accelerator for Deep CNNs](https://ieeexplore.ieee.org/document/7738524) — Chen, Krishna, Emer, Sze, JSSC 2017. *the chip.*
+- [Vega: A Ten-Core SoC for IoT Endnodes With DNN Acceleration and Cognitive Wake-Up](https://ieeexplore.ieee.org/document/9560136) — Rossi, …, Benini, JSSC 2022. *a conv engine next to the cores, in silicon.*
+- [Marsellus: A Heterogeneous RISC-V AI-IoT End-Node SoC With 2–8 b DNN Acceleration](https://ieeexplore.ieee.org/document/10269153) — Conti, …, Benini, JSSC 2024. *bit-width as a design parameter.*
+- [Self-Reconfigurable Evolvable Hardware System for Adaptive Image Processing](https://ieeexplore.ieee.org/document/6494560) — Salvador, Otero, Mora, de la Torre, Riesgo (UPM), Sekanina, TC 2013. *a systolic PE array for 2-D windows.*
+
+**tinyformer** — matmul, softmax, attention (the matmuls are ~80% of the run: start there)
+
+- [ITA: An Energy-Efficient Attention and Softmax Accelerator for Quantized Transformers](https://ieeexplore.ieee.org/document/10244348) — Islamoglu, …, Benini, ISLPED 2023. *int8 attention, integer softmax.*
+- [Toward Attention-Based TinyML: A Heterogeneous Accelerated Architecture and Automated Deployment Flow](https://ieeexplore.ieee.org/document/10833747) — Wiese, …, Conti, Benini, IEEE D&T 2025. *ITA next to RISC-V cores, whole networks.*
+- [Softermax: Hardware/Software Co-Design of an Efficient Softmax for Transformers](https://ieeexplore.ieee.org/document/9586134) — Stevens et al., DAC 2021. *softmax for integer hardware.*
+- [A^3: Accelerating Attention Mechanisms in Neural Networks with Approximation](https://ieeexplore.ieee.org/document/9065498) — Ham et al., HPCA 2020. *attention as a pipeline.*
+- [SpAtten: Efficient Sparse Attention Architecture with Cascade Token and Head Pruning](https://ieeexplore.ieee.org/document/9407232) — Wang, Zhang, Han, HPCA 2021. *skipping unimportant work.*
+- [RedMulE: A Compact FP16 Matrix-Multiplication Accelerator](https://ieeexplore.ieee.org/document/9774759) — Tortorella, …, Conti, DATE 2022. *matmul engine organization (FP16).*
+- [A Flexible Template for Edge Generative AI With High-Accuracy Accelerated Softmax and GELU](https://ieeexplore.ieee.org/document/10971415) — Belano, …, Conti, Benini, JETCAS 2025. *softmax/GELU next to a matmul engine (BF16).*
+
+**pqcrypto** — NTT and modular arithmetic (an NTT is an FFT modulo q: the FFT papers apply)
+
+- [An Extensive Study of Flexible Design Methods for the Number Theoretic Transform](https://ieeexplore.ieee.org/document/9171507) — Mert et al., TC 2022. *the NTT hardware tutorial.*
+- [High-Speed Polynomial Multiplication Architecture for Ring-LWE and SHE Cryptosystems](https://ieeexplore.ieee.org/document/6918547) — Chen, …, Roy, Verbauwhede, TCAS-I 2015. *pipelined NTT/INTT.*
+- [KaLi: A Crystal for Post-Quantum Security Using Kyber and Dilithium](https://ieeexplore.ieee.org/document/9946370) — Aikata, …, Pagliarini, Roy, TCAS-I 2023. *one NTT datapath for Kyber and Dilithium.*
+- [High-Speed NTT-based Polynomial Multiplication Accelerator for Post-Quantum Cryptography](https://ieeexplore.ieee.org/document/9603378) — Bisheh-Niasar, Azarderakhsh, Mozaffari-Kermani, ARITH 2021. *Kyber NTT, several butterfly cores.*
+- [An Energy-Efficient Configurable Lattice Cryptography Processor for the Quantum-Secure IoT](https://ieeexplore.ieee.org/document/8662528) — Banerjee, Pathak, Chandrakasan, ISSCC 2019. *low-power lattice crypto in silicon.*
+- [A New Approach to Pipeline FFT Processor](https://ieeexplore.ieee.org/document/508145) — He, Torkelson, IPPS 1996. *single-delay-feedback pipeline.*
+- [Pipelined Radix-2^k Feedforward FFT Architectures](https://ieeexplore.ieee.org/document/6118316) — Garrido, Grajal, Sánchez (UPM), Gustafsson, TVLSI 2013. *parallel feedforward pipelines.*
+- [Analyzing and Comparing Montgomery Multiplication Algorithms](https://ieeexplore.ieee.org/document/502403) — Koç, Acar, Kaliski, IEEE Micro 1996. *Montgomery reduction.*
 
 ## Layout
 
