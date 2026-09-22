@@ -151,25 +151,39 @@ if [ ! -x "$ROOT/verible/bin/verible-verilog-format" ]; then
 fi
 
 # --- 6. IHP SG13G2 PDK ---------------------------------------------------------
-# The repository root holds the PDK in a subdirectory of its own, so the PDK
-# itself ends up at $ROOT/pdk/ihp-sg13g2/ihp-sg13g2 -- the doubled name is the
-# clone directory plus the directory the repository carries. That full path is
-# what IHP_PDK_ROOT must point at (init.sh exports it, and the lab Makefiles
-# default to it).
+# The repository carries the PDK one level down (IHP-Open-PDK/ihp-sg13g2/), so
+# the clone goes to $ROOT/pdk/IHP-Open-PDK and $ROOT/pdk/ihp-sg13g2 is a
+# symlink to the PDK inside it. That symlink is IHP_PDK_ROOT: one clean path
+# for init.sh, the lab Makefiles and every tool script, with the repository
+# (its README, its versions.txt) still there to say what was fetched.
 #
 # Checked on libs.tech, not on the directory: an earlier hand-made install here
 # held libs.ref only, which is enough to synthesise and route but leaves
 # KLayout with no layer properties. If libs.tech is missing the tree is
 # replaced, and the clone lands beside it first so a failed download cannot
 # leave the machine with no PDK at all.
-PDK_DIR="$ROOT/pdk/ihp-sg13g2"
-if [ ! -d "$PDK_DIR/ihp-sg13g2/libs.tech" ]; then
+PDK_REPO="$ROOT/pdk/IHP-Open-PDK"
+PDK_ROOT="$ROOT/pdk/ihp-sg13g2"
+
+# An earlier version of this script cloned straight into $PDK_ROOT, which put
+# the PDK at $PDK_ROOT/ihp-sg13g2. Same content, so move it into place instead
+# of downloading 1.2 GB again.
+if [ ! -L "$PDK_ROOT" ] && [ -d "$PDK_ROOT/ihp-sg13g2/libs.tech" ]; then
+    echo "### 7. IHP SG13G2 PDK -- moving the earlier clone into place"
+    rm -rf "$PDK_REPO"
+    mv "$PDK_ROOT" "$PDK_REPO"
+    ln -sfn "IHP-Open-PDK/ihp-sg13g2" "$PDK_ROOT"
+fi
+
+if [ ! -d "$PDK_ROOT/libs.tech" ]; then
     echo "### 7. IHP SG13G2 PDK"
     mkdir -p "$ROOT/pdk"
-    rm -rf "$PDK_DIR.new"
-    git clone -q --depth 1 "$IHP_PDK_URL" "$PDK_DIR.new"
-    rm -rf "$PDK_DIR"
-    mv "$PDK_DIR.new" "$PDK_DIR"
+    rm -rf "$PDK_REPO.new"
+    git clone -q --depth 1 "$IHP_PDK_URL" "$PDK_REPO.new"
+    rm -rf "$PDK_REPO" "$PDK_ROOT"
+    mv "$PDK_REPO.new" "$PDK_REPO"
+    # Relative, so the whole tree can still be copied elsewhere.
+    ln -sfn "IHP-Open-PDK/ihp-sg13g2" "$PDK_ROOT"
 fi
 
 # --- 7. KLayout ----------------------------------------------------------------

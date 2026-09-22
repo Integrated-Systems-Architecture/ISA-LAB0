@@ -88,7 +88,7 @@ export PATH="$ISA_TOOLS/verilator/5.040/bin:$PATH"
 # /eda/scripts/init_cadence_2020-21 (Innovus -- not 2021-22, which needs AVX
 # this machine's CPU does not have) and /eda/scripts/init_questa_core_prime
 # (QuestaSim). Source those in the shell where you run those tools.
-export IHP_PDK_ROOT="$ISA_TOOLS/pdk/ihp-sg13g2/ihp-sg13g2"
+export IHP_PDK_ROOT="$ISA_TOOLS/pdk/ihp-sg13g2"
 
 # --- RTL formatting -----------------------------------------------------------
 # `mcu-gen` runs `verible-verilog-format` on the generated RTL.
