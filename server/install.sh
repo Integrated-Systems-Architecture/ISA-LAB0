@@ -1,26 +1,27 @@
 #!/bin/bash
-# ISA labs - install the shared toolchain. Run as root on isaserver (CentOS 7).
+# ISA labs - install the shared toolchain. Run as root on isaserver (CentOS 7),
+# straight out of the repository checkout:
 #
-#     mkdir -p /oss-tools
-#     cp install.sh init.sh requirements.txt /oss-tools/
-#     bash /oss-tools/install.sh 2>&1 | tee /oss-tools/install.log
+#     sudo bash lab0/server/install.sh 2>&1 | tee /oss-tools/install.log
 #
-# ROOT is the directory this script lives in, so the tree can be copied
-# elsewhere and reinstalled without editing anything. Conda bakes its own
-# absolute prefix into the env, so a finished install cannot be moved: copy the
-# scripts to the final path and install there.
+# The install path is absolute (/oss-tools) and has nothing to do with where
+# this script sits, so running it from the checkout installs to the right
+# place. Conda bakes its own absolute prefix into the env, so a finished
+# install cannot be moved afterwards; to install somewhere else, say so up
+# front:  ISA_ROOT=/somewhere sudo -E bash lab0/server/install.sh
 #
-# Updating an installed tree: re-running this script skips every finished
-# step, and it never re-copies init.sh -- after editing init.sh, copy it over
-# by hand (as root):  cp init.sh /oss-tools/init.sh
+# init.sh and requirements.txt are copied into $ROOT on every run, so editing
+# init.sh in the repository and re-running this script is all it takes to
+# update the environment students source.
 #
 # Idempotent: each step is skipped if its product is already in place.
 # Re-run one step from scratch by deleting its directory (conda/, src/,
-# verilator/, riscv/, verible/) first.
+# verilator/, riscv/, verible/, pdk/) first.
 
 set -euo pipefail   # pipefail matters: the tarballs are streamed curl | tar
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="${ISA_ROOT:-/oss-tools}"
+SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 JOBS="$(nproc)"
 
 VERILATOR_VERSION=5.040
@@ -40,8 +41,23 @@ MINICONDA_URL=https://repo.anaconda.com/miniconda/Miniconda3-py311_23.11.0-2-Lin
 # expects.
 COREV_URL="https://buildbot.embecosm.com/job/corev-gcc-centos7/48/artifact/corev-openhw-gcc-centos7-20240530.tar.gz"
 
-echo "### installing into $ROOT"
+echo "### installing into $ROOT (from $SRC_DIR)"
 mkdir -p "$ROOT/downloads"
+
+# The two files students' shells and the pip step read must live in $ROOT, not
+# in the checkout: $ROOT is what survives the checkout being deleted, and
+# init.sh works out the toolchain root from its own location. Copy them first
+# and on every run -- this is what makes "edit init.sh, re-run install.sh" the
+# whole update procedure.
+#
+# requirements.txt comes from lab0/, which is also what students install into
+# their own machines, so the shared env and theirs cannot drift.
+REQ_SRC="$SRC_DIR/../requirements.txt"
+[ -f "$REQ_SRC" ] || REQ_SRC="$SRC_DIR/requirements.txt"
+if [ "$SRC_DIR" != "$ROOT" ]; then
+    install -m 0644 "$SRC_DIR/init.sh" "$ROOT/init.sh"
+    install -m 0644 "$REQ_SRC"         "$ROOT/requirements.txt"
+fi
 
 # The finished tree is ~6 GB (conda 2.5 + CORE-V gcc 2 + verilator build 1).
 # Checking now beats failing halfway with "curl: (23) Failed writing body".
