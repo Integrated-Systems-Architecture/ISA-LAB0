@@ -77,6 +77,19 @@ export PATH="$RISCV_XHEEP/bin:$PATH"
 export VERILATOR_ROOT="$ISA_TOOLS/verilator/5.040/share/verilator"
 export PATH="$ISA_TOOLS/verilator/5.040/bin:$PATH"
 
+# --- ASIC flow ----------------------------------------------------------------
+# The IHP SG13G2 open PDK, used by synthesis (Design Compiler), place and route
+# (Innovus), the gate-level power runs and KLayout. The lab Makefiles default to
+# this same path, so nothing breaks if a student never sources this file -- but
+# exporting it means one place to change if the PDK moves.
+#
+# The commercial tools themselves are NOT set up here: they come from
+# /eda/scripts/init_design_vision (Design Compiler, PrimeTime/PrimePower),
+# /eda/scripts/init_cadence_2020-21 (Innovus -- not 2021-22, which needs AVX
+# this machine's CPU does not have) and /eda/scripts/init_questa_core_prime
+# (QuestaSim). Source those in the shell where you run those tools.
+export IHP_PDK_ROOT="$ISA_TOOLS/pdk/ihp-sg13g2/ihp-sg13g2"
+
 # --- RTL formatting -----------------------------------------------------------
 # `mcu-gen` runs `verible-verilog-format` on the generated RTL.
 export PATH="$ISA_TOOLS/verible/bin:$PATH"
@@ -89,3 +102,5 @@ echo "  riscv gcc $("$_isa_rvgcc" -dumpversion 2>/dev/null)   ($(basename "${_is
 unset _isa_rvgcc
 echo "  fusesoc   $(fusesoc --version 2>/dev/null)"
 echo "  verible   $(verible-verilog-format --version 2>/dev/null | head -1 | awk '{print $2}')"
+echo "  klayout   $(klayout -v 2>/dev/null | awk '{print $2}')"
+echo "  pdk       ihp-sg13g2 ($IHP_PDK_ROOT)"

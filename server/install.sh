@@ -25,6 +25,15 @@ JOBS="$(nproc)"
 
 VERILATOR_VERSION=5.040
 VERIBLE_VERSION=v0.0-4023-gc1271a00
+# KLayout, for looking at the GDS Innovus writes in Lab 2. The CentOS 7 builds
+# stop at 0.28.x -- 0.29 and later are not published for this distribution --
+# and that one links Qt4 (`qt-x11'), which is already on the machine.
+KLAYOUT_VERSION=0.28.17
+KLAYOUT_RPM="https://www.klayout.org/downloads/CentOS_7/klayout-${KLAYOUT_VERSION}-0.x86_64.rpm"
+# The IHP SG13G2 open PDK: Liberty, LEF, GDS and the Verilog cell models for
+# synthesis, place and route and gate-level simulation, plus the KLayout
+# layer properties without which a GDS opens as anonymous numbered layers.
+IHP_PDK_URL=https://github.com/IHP-GmbH/IHP-Open-PDK.git
 MINICONDA_URL=https://repo.anaconda.com/miniconda/Miniconda3-py311_23.11.0-2-Linux-x86_64.sh
 # CORE-V GCC 14.1.0, CentOS 7 build (system glibc is 2.17: newer builds abort
 # with "GLIBC_2.25 not found"). The prefix riscv32-corev-elf- is what X-HEEP
@@ -125,10 +134,42 @@ if [ ! -x "$ROOT/verible/bin/verible-verilog-format" ]; then
         | tar -xz --strip-components=1 -C "$ROOT/verible"
 fi
 
-# --- 6. permissions -----------------------------------------------------------
+# --- 6. IHP SG13G2 PDK ---------------------------------------------------------
+# The repository root holds the PDK in a subdirectory of its own, so the PDK
+# itself ends up at $ROOT/pdk/ihp-sg13g2/ihp-sg13g2 -- the doubled name is the
+# clone directory plus the directory the repository carries. That full path is
+# what IHP_PDK_ROOT must point at (init.sh exports it, and the lab Makefiles
+# default to it).
+#
+# Checked on libs.tech, not on the directory: an earlier hand-made install here
+# held libs.ref only, which is enough to synthesise and route but leaves
+# KLayout with no layer properties. If libs.tech is missing the tree is
+# replaced, and the clone lands beside it first so a failed download cannot
+# leave the machine with no PDK at all.
+PDK_DIR="$ROOT/pdk/ihp-sg13g2"
+if [ ! -d "$PDK_DIR/ihp-sg13g2/libs.tech" ]; then
+    echo "### 7. IHP SG13G2 PDK"
+    mkdir -p "$ROOT/pdk"
+    rm -rf "$PDK_DIR.new"
+    git clone -q --depth 1 "$IHP_PDK_URL" "$PDK_DIR.new"
+    rm -rf "$PDK_DIR"
+    mv "$PDK_DIR.new" "$PDK_DIR"
+fi
+
+# --- 7. KLayout ----------------------------------------------------------------
+# Installed with yum rather than unpacked under $ROOT: it is a Qt application
+# and pulls ruby, libgit2 and the Qt4 runtime from the distribution, which yum
+# resolves and a tarball would not. It lands in /usr/bin, so init.sh adds
+# nothing to PATH for it.
+if ! command -v klayout >/dev/null; then
+    echo "### 8. klayout $KLAYOUT_VERSION"
+    yum install -y "$KLAYOUT_RPM"
+fi
+
+# --- 8. permissions -----------------------------------------------------------
 # a+rX: read for all, execute only on directories and on files that already
 # have it. src/ and downloads/ are build leftovers, nobody needs them.
-echo "### 7. permissions"
+echo "### 9. permissions"
 rm -rf "$ROOT/src" "$ROOT/downloads"   # build leftovers, nobody needs them
 chown -R root:root "$ROOT"
 chmod -R a+rX "$ROOT"
@@ -136,10 +177,10 @@ chmod -R a+rX "$ROOT"
 d="$ROOT"
 while [ "$d" != "/" ]; do chmod o+x "$d"; d="$(dirname "$d")"; done
 
-# --- 7. verify ----------------------------------------------------------------
+# --- 9. verify ----------------------------------------------------------------
 # Run the real init.sh in a clean shell as an unprivileged user: this is the
 # only check that proves a student can use the install.
-echo "### 8. verify"
+echo "### 10. verify"
 su -s /bin/bash nobody -c "source '$ROOT/init.sh' >/dev/null && \
     python --version && \
     verilator --version | grep -q 'rev v' && verilator --version && \
@@ -147,7 +188,10 @@ su -s /bin/bash nobody -c "source '$ROOT/init.sh' >/dev/null && \
     fusesoc --version && \
     rv_profile --help >/dev/null && echo 'rv_profile ok' && \
     verible-verilog-format --version | head -1 && \
-    gtkwave --version 2>/dev/null | head -1"
+    gtkwave --version 2>/dev/null | head -1 && \
+    test -f \"\$IHP_PDK_ROOT/libs.ref/sg13g2_stdcell/lib/sg13g2_stdcell_typ_1p20V_25C.lib\" && \
+    test -f \"\$IHP_PDK_ROOT/libs.tech/klayout/tech/sg13g2.lyp\" && echo 'ihp-sg13g2 ok' && \
+    klayout -v 2>&1 | head -1"
 
 echo
 echo "### done. students run:  source $ROOT/init.sh"
