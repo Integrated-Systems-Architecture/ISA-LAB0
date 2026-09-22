@@ -230,14 +230,14 @@ int main(void) {
         sum += (uint32_t)bad * 0x10000u;
     }
 
-    printf("pqcrypto n=%d q=%d eta=%d du=%d dv=%d, %d round(s)\n",
+    PROFILE_PRINTF("pqcrypto n=%d q=%d eta=%d du=%d dv=%d, %d round(s)\n",
            N, K_NTT_Q, ETA, DU, DV, NROUND);
     // The ciphertext is (N*DU + N*DV) bits against N bits of plaintext; that
     // expansion, and the noise budget that forces it, is the whole cost of
     // lattice cryptography.
-    printf("ciphertext %d bytes for %d message bits, %d bit error(s)\n",
+    PROFILE_PRINTF("ciphertext %d bytes for %d message bits, %d bit error(s)\n",
            (N * DU + N * DV) / 8, N, errors);
-    printf("[profile] %-12s %10s %10s %6s %6s\n",
+    PROFILE_PRINTF("[profile] %-12s %10s %10s %6s %6s\n",
            "kernel", "cycles", "instr", "calls", "share");
     PROFILE_ACC_REPORT_OF(total,     PROFILE_ACC_CYCLES(total));
     PROFILE_ACC_REPORT_OF(ntt,       PROFILE_ACC_CYCLES(total));

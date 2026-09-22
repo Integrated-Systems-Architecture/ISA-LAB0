@@ -138,10 +138,13 @@ wrapped by hand. Build the profiling run with inlining off, otherwise every
 kernel disappears into `main` (see TUTORIAL.md §5):
 
 ```bash
-make verilator-run-app PROJECT=<app> COMPILER_FLAGS=-fno-inline
+make verilator-run-app PROJECT=<app> COMPILER_FLAGS="-fno-inline -DPROFILE_QUIET"
 make profile
 mkdir -p figures && cp flamegraph.svg figures/<app>.svg
 ```
+
+`-DPROFILE_QUIET` drops the profiling `printf`s, which otherwise dominate the
+flamegraph (a quarter of the run on `rxchain`). The `PASS` line still prints.
 
 **Commit one flamegraph per application** under `figures/` and link them here:
 

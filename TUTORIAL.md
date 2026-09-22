@@ -86,7 +86,7 @@ You only repeat these two steps after editing `config.py` or re-vendoring.
 make verilator-run-app PROJECT=rxchain
 ```
 
-Tail of the output:
+Tail of the output (default build: kernels inlined, profiling `printf`s on):
 
 ```
 Simulation finished after 994702 clock cycles
@@ -133,12 +133,40 @@ To see per-kernel functions you must **turn inlining off for the profiling
 build**:
 
 ```bash
-make verilator-run-app PROJECT=rxchain COMPILER_FLAGS=-fno-inline
+make verilator-run-app PROJECT=rxchain COMPILER_FLAGS="-fno-inline -DPROFILE_QUIET"
 make profile
 open flamegraph.svg          # macOS; Linux/WSL: xdg-open, or just open it in a browser
 ```
 
-The `-fno-inline` run reports different numbers:
+`-DPROFILE_QUIET` compiles the profiling `printf`s out. They are expensive:
+the `-fno-inline` `rxchain` build takes about **1.42 M simulated cycles** loud
+and **1.08 M** quiet, so formatting the report and pushing it through the UART
+costs roughly **340 000 cycles** — a quarter of the simulation, and half as much
+as the 722 482 cycles the kernels themselves take. (Careful: those are two
+different meters. The 1.42 M / 1.08 M are simulation lengths, the number in
+`Simulation finished after N clock cycles`, and they move by a few hundred
+cycles from host to host; 722 482 is `[profile] total`, the profiled region
+only, and that one is exact — see §4.) On the flamegraph the report is one enormous
+`printf` tower next to the code you care about; quiet, the graph shows kernels
+only. The `PASS` line still prints, so you can still tell the run was correct.
+
+Read the cycle table from a normal (loud) run, then re-run quiet for the
+picture.
+
+**Open it in a browser, not in an image viewer.** `flamegraph.svg` carries its
+own JavaScript and is interactive: click a box to zoom into that subtree,
+"Reset Zoom" (top left) to come back, `Ctrl-F` to search and highlight every
+frame matching a pattern, hover for the exact cycle count. Preview, `eog` and
+friends render it as a flat picture and you lose all of that.
+
+On the server there is no browser: copy the file to your own machine first.
+
+```bash
+scp <your-user>@isaserver:~/<repo>/flamegraph.svg .
+```
+
+Run the same build **without** `-DPROFILE_QUIET` once (`COMPILER_FLAGS="-fno-inline"`)
+and the cycle table comes back, with different numbers:
 
 ```
 [profile] total            722482     349799      1   100%

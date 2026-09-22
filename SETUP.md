@@ -14,12 +14,21 @@ everyone should end up with a working install.
 
 ## The short way: use the ISA server
 
-Everything below is already installed on **isaserver**. If you work there, skip
-the whole installation and source the shared environment instead:
+The whole toolchain is already installed on **isaserver**, in a shared
+directory. You install nothing: you source one script and work in your own home.
+
+> **Path to the environment:** `/oss-tools/init.sh`
+
+### 1. Log in
 
 ```bash
-ssh <your-user>@isaserver
-source ~luigi.giuffrida/isa-tools/init.sh
+ssh <your-user>@isaserver          # add -X if you want to open GTKWave remotely
+```
+
+### 2. Activate the environment
+
+```bash
+source /oss-tools/init.sh
 ```
 
 It prints what it activated:
@@ -33,18 +42,103 @@ ISA labs environment ready:
   verible   v0.0-4023-gc1271a00
 ```
 
-Run it in every new shell, or add that one line to your `~/.bashrc`. Then clone
-your group repository into your own home and follow
-[TUTORIAL.md](TUTORIAL.md) from step 3 — `make host-check`, `make vendor`,
-`make mcu-gen`, `make verilator-build` all work as written.
+Do this in **every** new shell. To avoid retyping it, append the same line to
+your `~/.bashrc`.
 
-Nothing of the shared directory is writable by you, and nothing needs to be:
-your build lives in your own repository.
+What it sets up, in case you need to know: the conda environment that carries
+Python, FuseSoC and the `rv_profile` profiler; `RISCV_XHEEP`, pointing at the
+CORE-V RISC-V compiler; Verilator and Verible on your `PATH`. It also unsets the
+`CC`/`CXX`/`GCC`/`OBJCOPY` variables the conda environment exports, which would
+otherwise make X-HEEP compile the boot ROM with the host compiler.
 
-Install locally (the rest of this file) if you prefer to work on your laptop, or
-if you want waveforms without X forwarding.
+The shared directory is read-only for you. Nothing is ever written there —
+your builds live in your own repository.
+
+### 3. Get your repository
+
+```bash
+cd ~
+git clone <your-group-repository>
+cd <your-group-repository>
+```
+
+Work in your home directory, not in `/tmp`: `/tmp` is cleaned and is shared with
+everyone else.
+
+### 4. Run the flow
+
+Exactly as on a laptop:
+
+```bash
+make host-check                            # ~5 s
+make vendor                                # ~1 min, downloads X-HEEP into ./x-heep
+make mcu-gen                               # ~1 min
+make verilator-build                       # 20-40 min on the server
+make verilator-run-app PROJECT=rxchain     # several min on the server
+make profile                               # ~2 min -> flamegraph.svg
+```
+
+Then continue with [TUTORIAL.md](TUTORIAL.md).
+
+**Be patient, and use `tmux`.** The server has 6 cores shared by everybody, so
+it is several times slower than a recent laptop: `rxchain` takes 47 s on an
+Apple M4 (994702 simulated clock cycles) and minutes on the server, and
+`make verilator-build` runs for tens of minutes. A dropped SSH connection kills
+whatever it was running, and you start again from zero.
+
+Run the long commands inside a terminal multiplexer, which survives the
+disconnection:
+
+```bash
+tmux new -s isa          # first time: open a session called "isa"
+# ... launch make, then detach with Ctrl-b d, log out, come back later ...
+tmux attach -t isa       # reattach, the build is still going
+```
+
+`screen` works too (`screen -S isa`, detach with `Ctrl-a d`, back with
+`screen -r isa`), if it is installed. `tmux` is there for sure.
+
+A simulation is single-threaded: running two at once does not make either
+faster, it makes both slower for everyone.
+
+### 5. Waveforms
+
+GTKWave is installed, but it is a GUI: connect with `ssh -X` (X11 forwarding)
+and run `make verilator-waves`. Over a slow link it is more comfortable to copy
+the waveform to your own machine instead:
+
+```bash
+scp <your-user>@isaserver:~/<repo>/x-heep/build/*/sim-verilator/waveform.fst .
+```
+
+Same for the flamegraph `make profile` writes: it is an SVG with embedded
+JavaScript (click to zoom, `Ctrl-F` to search), so copy it over and open it in
+a **browser** — the server has no display, and an image viewer shows only a
+flat picture.
+
+```bash
+scp <your-user>@isaserver:~/<repo>/flamegraph.svg .
+```
+
+### 6. Disk space and courtesy
+
+The server is shared and its disk is not large. The Verilator model is about
+600 MB per group, so:
+
+- keep **one** build tree, not one per branch;
+- run `make clean` (or delete `x-heep/build`) when you are done with a session;
+- do not launch several `verilator-build` runs at the same time — the machine
+  has 6 cores and everybody shares them;
+- `du -sh ~` occasionally, and delete old `.fst` waveforms (they are the
+  biggest files you will generate).
+
+If a command fails with a missing tool, you almost certainly forgot to source
+the environment in that shell. Check with `which verilator fusesoc`.
 
 ---
+
+The rest of this file is for installing on **your own machine**. On the server,
+you are done after the section above.
 
 ## 0. What you are installing, and why
 
@@ -259,6 +353,8 @@ Now go to [TUTORIAL.md](TUTORIAL.md).
 | `WARNING: RISCV_XHEEP not set in environment ... Using default: ~/.riscv` | `export RISCV_XHEEP=$HOME/tools/riscv` |
 | `riscv32-corev-elf-gcc: not found` | toolchain not unpacked into `$RISCV_XHEEP`, or the tarball had an extra top directory — check `ls $RISCV_XHEEP/bin` |
 | `make: *** No rule to make target 'verilator-build'` | `make vendor` was not run (`x-heep/external.mk` does not exist yet) |
+| `ld: cannot find -lelf` at the end of `make verilator-build` | step 1 skipped or incomplete: the testbench links libelf — `sudo apt install libelf-dev` (Fedora/RHEL: `elfutils-libelf-devel`) |
+| `Command './Vtestharness' not found. Make sure it is in $PATH` | the model was never built: `make verilator-build` did not finish — re-run it and read its *first* error, not the last |
 | fusesoc/verilator errors mentioning `%Error: ... unsupported` | wrong Verilator version — `verilator --version` must say 5.040 |
 | `make profile` says `no .fst under x-heep/build` | run `make verilator-run-app PROJECT=<app>` first; the profiler reads that run's waveform |
 | `rv_profile: command not found` | conda env not activated, or `pip install -r requirements.txt` not done |

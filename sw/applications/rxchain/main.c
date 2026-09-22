@@ -114,6 +114,8 @@ static void init_coeffs(void) {
 }
 
 // Mean square of a signal, skipping the filter's startup transient.
+// Only used in the report, which -DPROFILE_QUIET compiles out.
+__attribute__((unused))
 static uint32_t energy(const int16_t *v, int n, int skip) {
     uint32_t acc = 0;
     for (int i = skip; i < n; i++) {
@@ -171,16 +173,16 @@ int main(void) {
         sum += receive() * (uint32_t)(b + 1);
     }
 
-    printf("rxchain n=%d taps=%d dec=%d -> %d out, %d block(s)\n",
+    PROFILE_PRINTF("rxchain n=%d taps=%d dec=%d -> %d out, %d block(s)\n",
            NSAMP, TAPS, DEC, NOUT, NBLOCK);
     // After mixing, the wanted tone sits at DC on I and the interferer has
     // been filtered out, so filtered-I energy is dominated by a steady level
     // near (AMPL/2)^2 while Q collapses towards zero.
-    printf("energy: rf=%u  baseband I=%u  Q=%u\n",
+    PROFILE_PRINTF("energy: rf=%u  baseband I=%u  Q=%u\n",
            (unsigned)energy(x, NSAMP, 0),
            (unsigned)energy(flt_i, NSAMP, TAPS),
            (unsigned)energy(flt_q, NSAMP, TAPS));
-    printf("[profile] %-12s %10s %10s %6s %6s\n",
+    PROFILE_PRINTF("[profile] %-12s %10s %10s %6s %6s\n",
            "kernel", "cycles", "instr", "calls", "share");
     PROFILE_ACC_REPORT_OF(total,     PROFILE_ACC_CYCLES(total));
     PROFILE_ACC_REPORT_OF(nco,       PROFILE_ACC_CYCLES(total));

@@ -20,6 +20,24 @@
 #include <stdint.h>
 #include <stdio.h>
 
+// --- Quiet builds -----------------------------------------------------------
+//
+// printf is expensive: formatting and pushing one report through the UART costs
+// hundreds of thousands of cycles, which is more than the kernels themselves.
+// In a flamegraph of a normal run those boxes swamp everything you actually
+// wanted to see. Build with -DPROFILE_QUIET to compile every profiling printf
+// out; the PASS/FAIL line of check_result still prints, so the run stays
+// verifiable.
+//
+//     make verilator-run-app PROJECT=rxchain COMPILER_FLAGS="-fno-inline -DPROFILE_QUIET"
+//
+// Read the cycle numbers from a normal run, then re-run quiet for the picture.
+#ifdef PROFILE_QUIET
+#define PROFILE_PRINTF(...) ((void)0)
+#else
+#define PROFILE_PRINTF(...) printf(__VA_ARGS__)
+#endif
+
 #ifdef __riscv
 // Return type is register-width (unsigned long == 32-bit on the RV32 ilp32
 // target) so the csrr operand matches the register and no width warning fires.
@@ -52,7 +70,7 @@ static inline uint32_t read_minstret(void) { return 0; }
     do {                                                                       \
         uint32_t _c = read_mcycle() - _prof_c0_##tag;                          \
         uint32_t _i = read_minstret() - _prof_i0_##tag;                        \
-        printf("[profile] " #tag ": %u cycles, %u instr\n",                    \
+        PROFILE_PRINTF("[profile] " #tag ": %u cycles, %u instr\n",                    \
                (unsigned)_c, (unsigned)_i);                                    \
     } while (0)
 
@@ -96,7 +114,7 @@ static inline uint32_t read_minstret(void) { return 0; }
 // Percentage is of `total` cycles, integer, so it stays readable when the app
 // runs on a board with no floating point printf.
 #define PROFILE_ACC_REPORT_OF(tag, total)                                      \
-    printf("[profile] %-12s %10u %10u %6u %5u%%\n",        \
+    PROFILE_PRINTF("[profile] %-12s %10u %10u %6u %5u%%\n",        \
            #tag, (unsigned)_pa_c_##tag, (unsigned)_pa_i_##tag,                 \
            (unsigned)_pa_n_##tag,                                              \
            (unsigned)((total) ? (uint32_t)(((uint64_t)_pa_c_##tag * 100u) /    \

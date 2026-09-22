@@ -154,9 +154,9 @@ int main(void) {
         sum += k_checksum_i32(logits, NCLASS);
     }
 
-    printf("tinydnn %dx%d -> %d classes, %d inference(s)\n",
+    PROFILE_PRINTF("tinydnn %dx%d -> %d classes, %d inference(s)\n",
            IMG, IMG, NCLASS, NINFER);
-    printf("[profile] %-12s %10s %10s %6s %6s\n",
+    PROFILE_PRINTF("[profile] %-12s %10s %10s %6s %6s\n",
            "kernel", "cycles", "instr", "calls", "share");
     PROFILE_ACC_REPORT_OF(total,   PROFILE_ACC_CYCLES(total));
     PROFILE_ACC_REPORT_OF(conv,    PROFILE_ACC_CYCLES(total));

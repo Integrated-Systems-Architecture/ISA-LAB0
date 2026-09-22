@@ -270,9 +270,9 @@ int main(void) {
         sum += k_checksum_i32(logits, NCLASS);
     }
 
-    printf("tinyformer seq=%d dm=%d heads=%d dff=%d layers=%d, %d pass(es)\n",
+    PROFILE_PRINTF("tinyformer seq=%d dm=%d heads=%d dff=%d layers=%d, %d pass(es)\n",
            SEQ, DM, HEADS, DFF, NLAYER, NINFER);
-    printf("[profile] %-12s %10s %10s %6s %6s\n",
+    PROFILE_PRINTF("[profile] %-12s %10s %10s %6s %6s\n",
            "kernel", "cycles", "instr", "calls", "share");
     PROFILE_ACC_REPORT_OF(total,   PROFILE_ACC_CYCLES(total));
     PROFILE_ACC_REPORT_OF(linear,  PROFILE_ACC_CYCLES(total));
