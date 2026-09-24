@@ -21,9 +21,45 @@ directory. You install nothing: you source one script and work in your own home.
 
 ### 1. Log in
 
-```bash
-ssh <your-user>@isaserver          # add -X if you want to open GTKWave remotely
+The server is `led-x3850-2.polito.it`, SSH port `10038`. Accounts go from
+`isa01_2026_2027` to `isa42_2026_2027`: use the one assigned to your group.
+The default password is given in class; change it with `passwd` the first time
+you log in.
+
+Put this in your `~/.ssh/config` (replace `NN` with your account number):
+
 ```
+Host isa
+  HostName led-x3850-2.polito.it
+  Port 10038
+  User isaNN_2026_2027
+  ForwardX11 yes
+```
+
+Then:
+
+```bash
+ssh isa          # ForwardX11 above lets you open GTKWave remotely
+```
+
+#### Optional: a full remote desktop with X2Go
+
+If you prefer a desktop to single forwarded windows, the server runs X2Go.
+It is also much faster than `ssh -X` over a slow link, and the session
+survives a dropped connection: reconnect and your windows are still there.
+
+1. Install the [X2Go client](https://wiki.x2go.org/doku.php/download:start).
+   It needs no XQuartz on macOS.
+2. Create a new session:
+   - **Host:** `led-x3850-2.polito.it`
+   - **Login:** `isaNN_2026_2027`, your account
+   - **SSH port:** `10038`
+   - **Session type:** `MATE`
+3. Connect and enter your password. Open a terminal from the MATE menu and
+   continue from step 2 below.
+
+When you are done, log out from the MATE menu. Closing the window only
+suspends the session, and it keeps running on the server.
 
 ### 2. Activate the environment
 
@@ -108,7 +144,7 @@ and run `make verilator-waves`. Over a slow link it is more comfortable to copy
 the waveform to your own machine instead:
 
 ```bash
-scp <your-user>@isaserver:~/<repo>/x-heep/build/*/sim-verilator/waveform.fst .
+scp isa:~/<repo>/x-heep/build/*/sim-verilator/waveform.fst .
 ```
 
 Same for the flamegraph `make profile` writes: it is an SVG with embedded
@@ -117,7 +153,7 @@ a **browser** — the server has no display, and an image viewer shows only a
 flat picture.
 
 ```bash
-scp <your-user>@isaserver:~/<repo>/flamegraph.svg .
+scp isa:~/<repo>/flamegraph.svg .
 ```
 
 ### 6. Disk space and courtesy

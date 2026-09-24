@@ -162,7 +162,7 @@ friends render it as a flat picture and you lose all of that.
 On the server there is no browser: copy the file to your own machine first.
 
 ```bash
-scp <your-user>@isaserver:~/<repo>/flamegraph.svg .
+scp isa:~/<repo>/flamegraph.svg .
 ```
 
 Run the same build **without** `-DPROFILE_QUIET` once (`COMPILER_FLAGS="-fno-inline"`)
